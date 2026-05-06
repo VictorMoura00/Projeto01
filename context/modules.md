@@ -1,59 +1,98 @@
 # AdminCore — Descrição dos Módulos
 
 ## Shared.Kernel (`src/Shared/AdminCore.Shared.Kernel`)
-Primitivos compartilhados por todos os módulos. **Não contém lógica de negócio.**
-- `AuditableEntity` — base com Id, CreatedAt, UpdatedAt, CreatedBy, UpdatedBy
+Primitivos compartilhados. **Sem lógica de negócio.**
+- `AuditableEntity` — base: Id (Guid), CreatedAt, UpdatedAt
 - `TenantAuditableEntity` — extends AuditableEntity com TenantId
-- `ICurrentTenant` — interface para resolver tenant da requisição
-- `ICurrentUser` — interface para resolver usuário autenticado
-- `IModule` — contrato para registro de módulos no DI
-- `PagedList<T>` — resultado paginado padrão
-- `DomainException`, `NotFoundException`, `ForbiddenException`, `ConflictException`
+- `ICurrentTenant` — interface para resolver tenant da requisição (não implementado enquanto auth é deferido)
+- `IModule` — contrato `RegisterModule(IServiceCollection, IConfiguration)`
+- `PagedList<T>` — `{ Items, TotalCount, Page, PageSize, TotalPages, HasNextPage, HasPreviousPage }` (init-only)
+- `NotFoundException(entity, key)`, `ForbiddenException(message?)`, `ConflictException(message)`, `DomainException(message)`
 
-## Auth Module (`src/Modules/Auth`)
-Autenticação e identidade de usuários.
-- `AppUser` (IdentityUser) — usuário com TenantId, FirstName, LastName
-- `AppRole` (IdentityRole) — role com TenantId
-- `RefreshToken` — controle de tokens de renovação
-- DbContext: `AuthDbContext` (schema `auth`)
-- Responsabilidades: login, register, refresh token, logout
+---
+
+## Auth Module (`src/Modules/Auth`) — **DEFERIDO**
+Domínio criado, migrations aplicadas, **handlers e endpoints NÃO implementados**.
+- `AppUser` (IdentityUser<Guid>) — com TenantId, FirstName, LastName, IsActive
+- `AppRole` (IdentityRole<Guid>) — com TenantId, Description, IsSystemRole
+- `RefreshToken` — Token, ExpiresAt, IsRevoked, ReplacedByToken
+- `AuthDbContext` (schema `auth`)
+
+---
 
 ## Tenants Module (`src/Modules/Tenants`)
 Gerenciamento de tenants e white label.
-- `Tenant` — id, slug, name, logo, favicon, isActive
-- `TenantTheme` (owned entity) — primaryColor, secondaryColor, accentColor, fontFamily
-- DbContext: `TenantsDbContext` (schema `tenants`)
-- Endpoint público: `GET /tenants/{slug}/config` (sem auth)
+
+**Domínio:**
+- `Tenant` — slug (unique), name, logoUrl?, faviconUrl?, isActive
+- `TenantTheme` (owned entity) — primaryColor, secondaryColor, accentColor, surfaceColor, fontFamily
+
+**Application:**
+- Commands: `CreateTenant`, `UpdateTenant`, `UpdateTenantTheme`
+- Queries: `GetTenants`, `GetTenantById`, `GetTenantConfig` (por slug — público)
+
+**Controller:** `TenantsController` — `/admin/tenants/*` + `/tenants/{slug}/config`
+
+---
 
 ## Entities Module (`src/Modules/Entities`)
-Núcleo do sistema — entidades e campos dinâmicos.
-- `EntityDefinition` — define um "tipo" de entidade (ex: "Chamado TI")
-- `FieldDefinition` — campos da entidade (tipo, validações, ordem, opções)
-- `EntityData` — instâncias com payload JSONB
-- `FieldType` — Text, Textarea, Number, Decimal, Date, DateTime, Boolean, Select, MultiSelect, File, Relation
-- DbContext: `EntitiesDbContext` (schema `entities`)
-- JSONB no PostgreSQL para payload flexível sem DDL dinâmico
+Núcleo do sistema — entidades dinâmicas sem DDL runtime.
+
+**Domínio:**
+- `EntityDefinition` — define um tipo de entidade (name, slug, icon, description, displayOrder, isActive)
+- `FieldDefinition` — campo da entidade (name, slug, fieldType, isRequired, isSearchable, isFilterable, displayOrder)
+- `EntityData` — instâncias com `Payload` JSONB + TenantId + EntityDefinitionId
+- `FieldType` enum: Text=0, Textarea=1, Number=2, Decimal=3, Date=4, DateTime=5, Boolean=6, Select=7, MultiSelect=8, File=9, Relation=10
+
+**Application:**
+- Commands: `CreateEntityDefinition`, `UpdateEntityDefinition`, `DeleteEntityDefinition`, `CreateFieldDefinition`, `UpdateFieldDefinition`, `DeleteFieldDefinition`, `ReorderFields`
+- Queries: `GetEntityDefinitions` (paginado + search), `GetEntityDefinitionById` (com campos)
+- DTOs: `EntityDefinitionDto`, `FieldDefinitionDto`
+
+**Controller:** `EntitiesController` — `/admin/entities/*`
+
+---
 
 ## Access Module (`src/Modules/Access`)
-Roles customizáveis e permissões granulares.
-- `AppRole` — role por tenant com nome e descrição customizáveis
-- `RolePermission` — permissão por role × entidade (flags: Create, Read, Update, Delete)
-- `PermissionOperation` — flags enum [None=0, Create=1, Read=2, Update=4, Delete=8, All=15]
-- DbContext: `AccessDbContext` (schema `access`)
-- API pública: `GET /config/entities` respeita permissões do token
+Roles customizáveis e permissões granulares por entidade.
+
+**Domínio:**
+- `AppRole` (TenantAuditableEntity) — name, description, isSystemRole, isActive
+- `RolePermission` — RoleId, EntitySlug, Operations (flags)
+- `PermissionOperation` flags: None=0, Create=1, Read=2, Update=4, Delete=8, All=15
+
+**Application:**
+- Commands: `CreateRole`, `UpdateRole`, `DeleteRole`, `SetRolePermissions`
+- Queries: `GetRoles`, `GetRoleById`
+- DTO: `AppRoleDto` com `List<RolePermissionDto>`
+
+**Controller:** `AccessController` — `/admin/roles/*`
+
+---
 
 ## Parameters Module (`src/Modules/Parameters`)
-Configurações e parâmetros do sistema.
-- `SystemParameter` — chave/valor/tipo por escopo (Global ou Tenant)
-- `ParameterType` — String, Number, Boolean, Json
-- `ParameterScope` — Global (todos os tenants) ou Tenant (isolado)
-- DbContext: `ParametersDbContext` (schema `parameters`)
-- Cache automático com invalidação ao salvar
+Configurações chave-valor com escopo e tipo.
+
+**Domínio:**
+- `SystemParameter` — Key (unique por TenantId), Value, Type, Group, Description, Scope, TenantId?, IsReadOnly
+- `ParameterType`: String=0, Number=1, Boolean=2, Json=3
+- `ParameterScope`: Global=0, Tenant=1
+
+**Application:**
+- Commands: `CreateParameter`, `UpdateParameter` (apenas value+description), `DeleteParameter`
+- Queries: `GetParameters` (por group + tenant), `GetParameterByKey`
+- Parâmetros IsReadOnly bloqueiam update e delete
+
+**Controller:** `ParametersController` — `/admin/parameters/*`
+
+---
 
 ## API Host (`src/AdminCore.API`)
 Host mínimo — apenas inicialização e roteamento.
-- `Program.cs` — registra todos os módulos via `IModule.RegisterModule()`
-- Wolverine configurado para descobrir handlers em todos os assemblies de módulos
-- JWT Bearer configurado globalmente
-- CORS configurado para o frontend
-- `/health` endpoint público
+
+- `Program.cs` — só extension methods (regra obrigatória)
+- `Extensions/ModulesExtensions.cs` — instancia e chama `RegisterModule()` de cada módulo
+- `Extensions/WolverineExtensions.cs` — adiciona assemblies de todos os módulos ao scan
+- `Extensions/CorsExtensions.cs` — origin padrão `http://localhost:4200`
+- `DevTenantId` hardcoded em todos os controllers enquanto auth é deferido
+- porta: **5000** (launchSettings.json, perfil `http`)

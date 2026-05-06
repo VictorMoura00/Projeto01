@@ -88,7 +88,7 @@ interface PermissionRow { entitySlug: string; create: boolean; read: boolean; up
         }
         <div class="form-actions">
           <p-button label="Cancelar" [text]="true" (onClick)="showRoleForm = false" />
-          <p-button label="Salvar" type="submit" [loading]="saving()" [disabled]="roleForm.invalid" />
+          <p-button label="Salvar" (onClick)="submitRole()" [loading]="saving()" [disabled]="roleForm.invalid" />
         </div>
       </form>
     </p-dialog>

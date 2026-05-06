@@ -95,7 +95,7 @@ import { Tenant, TenantTheme } from './white-label.model';
         }
         <div class="form-actions">
           <p-button label="Cancelar" [text]="true" (onClick)="showTenantForm = false" />
-          <p-button label="Salvar" type="submit" [loading]="saving()" [disabled]="tenantForm.invalid" />
+          <p-button label="Salvar" (onClick)="submitTenant()" [loading]="saving()" />
         </div>
       </form>
     </p-dialog>
@@ -145,7 +145,7 @@ import { Tenant, TenantTheme } from './white-label.model';
           </div>
           <div class="form-actions" style="margin-top:1rem">
             <p-button label="Cancelar" [text]="true" (onClick)="showThemeForm = false" />
-            <p-button label="Salvar Tema" type="submit" [loading]="savingTheme()" />
+            <p-button label="Salvar Tema" (onClick)="submitTheme()" [loading]="savingTheme()" />
           </div>
         </form>
       }
@@ -236,7 +236,10 @@ export class WhiteLabelComponent implements OnInit {
   }
 
   submitTenant() {
-    if (this.tenantForm.invalid) return;
+    if (this.tenantForm.invalid) {
+      this.tenantForm.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
     const val = this.tenantForm.getRawValue();
     const t = this.editingTenant();

@@ -6,7 +6,7 @@ import { MessageService } from 'primeng/api';
 @Component({
   selector: 'app-admin-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastModule],
-  providers: [MessageService],
+  providers: [],
   template: `
     <p-toast />
     <div class="admin-layout">

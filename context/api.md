@@ -2,81 +2,113 @@
 
 ## Base URL
 - Dev: `http://localhost:5000`
-- Docker: `http://localhost:8080`
+- Produção Docker: `http://localhost:8080`
 
-## Endpoints Disponíveis
+## Estado Atual (sem autenticação — DevTenantId hardcoded)
+Enquanto auth não está implementado, todos os endpoints admin usam um tenant fixo:
+`DevTenantId = 00000000-0000-0000-0000-000000000001`
+
+---
+
+## Endpoints Implementados
 
 ### Health
 ```
 GET /health → { status: "healthy", timestamp: "..." }
 ```
 
-### Config (público — sem autenticação)
+### Entities
 ```
-GET /tenants/{slug}/config → tema e configurações visuais do tenant
-GET /config/entities        → lista entidades do tenant autenticado
-GET /config/entities/{id}/schema → schema completo (campos + validações)
-GET /config/parameters/{group}  → parâmetros por grupo
-```
-
-### Admin (requer autenticação — fase futura)
-```
-# Entities
-GET    /admin/entities
-POST   /admin/entities
+GET    /admin/entities?page=1&pageSize=20&search=
+POST   /admin/entities                        body: { name, slug, description?, icon? }
 GET    /admin/entities/{id}
-PUT    /admin/entities/{id}
+PUT    /admin/entities/{id}                   body: { name, description?, icon?, isActive }
 DELETE /admin/entities/{id}
 
-GET    /admin/entities/{id}/fields
-POST   /admin/entities/{id}/fields
-PUT    /admin/entities/{id}/fields/{fieldId}
+GET    /admin/entities/{id}/fields            → retorna entidade com campos
+POST   /admin/entities/{id}/fields            body: { name, slug, fieldType, isRequired, isSearchable, isFilterable }
+PUT    /admin/entities/{id}/fields/{fieldId}  body: { name, fieldType, isRequired, isSearchable, isFilterable }
 DELETE /admin/entities/{id}/fields/{fieldId}
-
-# Parameters
-GET    /admin/parameters
-GET    /admin/parameters/{group}
-PUT    /admin/parameters/{key}
-
-# Access
-GET    /admin/roles
-POST   /admin/roles
-GET    /admin/roles/{id}/permissions
-PUT    /admin/roles/{id}/permissions
-
-GET    /admin/users
-POST   /admin/users
-PUT    /admin/users/{id}/roles
-
-# White Label
-GET    /admin/theme
-PUT    /admin/theme
+PUT    /admin/entities/{id}/fields/reorder    body: [guid, guid, ...]
 ```
+
+### Parameters
+```
+GET    /admin/parameters?group=&page=1&pageSize=50
+GET    /admin/parameters/{key}
+POST   /admin/parameters                      body: { key, value, type, group?, description?, scope, isReadOnly? }
+PUT    /admin/parameters/{id}                 body: { value, description? }
+DELETE /admin/parameters/{id}
+```
+
+### Access (Roles)
+```
+GET    /admin/roles?page=1&pageSize=20
+GET    /admin/roles/{id}
+POST   /admin/roles                           body: { name, description? }
+PUT    /admin/roles/{id}                      body: { name, description?, isActive }
+DELETE /admin/roles/{id}
+PUT    /admin/roles/{id}/permissions          body: { permissions: [{ entitySlug, operations }] }
+```
+
+### Tenants / White Label
+```
+GET    /admin/tenants?page=1&pageSize=20
+GET    /admin/tenants/{id}
+POST   /admin/tenants                         body: { name, slug }
+PUT    /admin/tenants/{id}                    body: { name, logoUrl?, faviconUrl?, isActive }
+PUT    /admin/tenants/{id}/theme              body: { primaryColor, secondaryColor, accentColor, surfaceColor, fontFamily }
+
+GET    /tenants/{slug}/config                 → público, sem auth → { slug, name, logoUrl?, faviconUrl?, theme }
+```
+
+---
 
 ## Convenção de Resposta
 ```json
-// Lista paginada
+// Lista paginada (PagedList<T>)
 {
   "items": [...],
   "totalCount": 50,
   "page": 1,
   "pageSize": 20,
-  "totalPages": 3
+  "totalPages": 3,
+  "hasNextPage": true,
+  "hasPreviousPage": false
 }
 
-// Erro de validação (400)
-{
-  "errors": {
-    "name": ["Name is required"],
-    "slug": ["Slug must be lowercase"]
-  }
-}
+// Erro 404 (NotFoundException)
+{ "message": "Entity with key '...' was not found." }
 
-// Erro de domínio (422)
+// Erro 409 (ConflictException)
 { "message": "Entity with slug 'chamado-ti' already exists." }
+
+// Erro 403 (ForbiddenException)
+{ "message": "You do not have permission to perform this action." }
 ```
 
-## Segurança (fase futura)
-- JWT Bearer em `Authorization: Bearer <token>`
-- Claim `tenant_id` usado pelo middleware para resolver ICurrentTenant
-- Permissões verificadas por handler antes de executar operação
+## Enums
+
+### FieldType
+```
+Text=0, Textarea=1, Number=2, Decimal=3, Date=4, DateTime=5,
+Boolean=6, Select=7, MultiSelect=8, File=9, Relation=10
+```
+
+### ParameterType / ParameterScope
+```
+Type:  String=0, Number=1, Boolean=2, Json=3
+Scope: Global=0, Tenant=1
+```
+
+### PermissionOperation (flags)
+```
+None=0, Create=1, Read=2, Update=4, Delete=8, All=15
+```
+
+---
+
+## Pendente (não implementado)
+- `GET /config/entities` — API pública para apps de negócio consumirem
+- Endpoints de usuários (`/admin/users`)
+- JWT auth em todos os endpoints (DevTenantId será substituído)

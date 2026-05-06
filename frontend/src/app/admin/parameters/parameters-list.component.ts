@@ -95,7 +95,7 @@ import { SystemParameter, ParameterType, ParameterScope, PARAMETER_TYPE_LABELS }
         </div>
         <div class="form-actions">
           <p-button label="Cancelar" [text]="true" (onClick)="showForm = false" />
-          <p-button label="Salvar" type="submit" [loading]="saving()" [disabled]="form.invalid" />
+          <p-button label="Salvar" (onClick)="submit()" [loading]="saving()" [disabled]="form.invalid" />
         </div>
       </form>
     </p-dialog>
