@@ -26,3 +26,7 @@
 .vscode/
 !.vscode/settings.json
 !.vscode/mcp.json
+
+# Agent configs
+.codex/
+.opencode/
