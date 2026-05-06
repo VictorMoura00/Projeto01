@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -18,99 +18,134 @@ import { SystemParameter, ParameterType, ParameterScope, PARAMETER_TYPE_LABELS }
     SelectModule, TagModule, DialogModule, ConfirmDialogModule
   ],
   providers: [ConfirmationService],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <p-confirmDialog />
 
-    <div class="page-header">
-      <h2>Parâmetros do Sistema</h2>
-      <p-button label="Novo Parâmetro" icon="pi pi-plus" (onClick)="openCreate()" />
-    </div>
+    <section class="admin-page">
+      <div class="page-header">
+        <div>
+          <span class="page-kicker">Configuração</span>
+          <h1 class="page-title">Parâmetros do sistema</h1>
+          <p class="page-description">Centralize valores de configuração, escopo e tipos para ajustes operacionais controlados.</p>
+        </div>
+        <div class="page-actions">
+          <p-button label="Novo parâmetro" icon="pi pi-plus" (onClick)="openCreate()" />
+        </div>
+      </div>
 
-    <p-table [value]="parameters()" [loading]="loading()" [rowGroupMode]="'subheader'"
-             groupRowsBy="group" [sortField]="'group'" [sortOrder]="1"
-             [tableStyle]="{'min-width': '60rem'}">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Chave</th>
-          <th>Valor</th>
-          <th>Tipo</th>
-          <th>Descrição</th>
-          <th style="width:120px"></th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="rowgroupheader" let-row>
-        <tr>
-          <td colspan="5">
-            <span class="group-header">{{ row.group ?? 'Geral' }}</span>
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-param>
-        <tr>
-          <td><code>{{ param.key }}</code></td>
-          <td class="value-cell">{{ param.value }}</td>
-          <td><p-tag [value]="typeLabel(param.type)" severity="info" /></td>
-          <td class="desc-cell">{{ param.description }}</td>
-          <td>
-            <div class="row-actions">
-              <p-button icon="pi pi-pencil" size="small" [text]="true" [disabled]="param.isReadOnly" (onClick)="openEdit(param)" />
-              <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" [disabled]="param.isReadOnly" (onClick)="confirmDelete(param)" />
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="emptymessage">
-        <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--p-text-muted-color)">Nenhum parâmetro cadastrado.</td></tr>
-      </ng-template>
-    </p-table>
+      <div class="metric-strip" aria-label="Resumo de parâmetros">
+        <div class="metric-card">
+          <span class="metric-label">Total</span>
+          <strong class="metric-value">{{ parameters().length }}</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Grupos</span>
+          <strong class="metric-value">{{ groupCount() }}</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Somente leitura</span>
+          <strong class="metric-value">{{ readOnlyCount() }}</strong>
+        </div>
+      </div>
+
+      <div class="table-shell">
+        <div class="table-toolbar">
+          <div>
+            <strong class="toolbar-title">Parâmetros cadastrados</strong>
+            <p class="toolbar-meta">Agrupados por contexto para facilitar auditoria e manutenção.</p>
+          </div>
+        </div>
+
+        <p-table [value]="parameters()" [loading]="loading()" [rowGroupMode]="'subheader'"
+                 groupRowsBy="group" [sortField]="'group'" [sortOrder]="1"
+                 [tableStyle]="{'min-width': '60rem'}" rowHover styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Chave</th>
+              <th>Valor</th>
+              <th>Tipo</th>
+              <th>Descrição</th>
+              <th class="actions-col">Ações</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="rowgroupheader" let-row>
+            <tr>
+              <td colspan="5">
+                <span class="group-header">{{ row.group ?? 'Geral' }}</span>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-param>
+            <tr>
+              <td><code>{{ param.key }}</code></td>
+              <td class="value-cell">{{ param.value }}</td>
+              <td><p-tag [value]="typeLabel(param.type)" severity="info" /></td>
+              <td class="desc-cell">{{ param.description || 'Sem descrição' }}</td>
+              <td>
+                <div class="row-actions">
+                  <p-button icon="pi pi-pencil" size="small" [text]="true" ariaLabel="Editar parâmetro" [disabled]="param.isReadOnly" (onClick)="openEdit(param)" />
+                  <p-button icon="pi pi-trash" size="small" [text]="true" ariaLabel="Excluir parâmetro" severity="danger" [disabled]="param.isReadOnly" (onClick)="confirmDelete(param)" />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <strong>Nenhum parâmetro cadastrado</strong>
+                  Crie parâmetros para controlar comportamento por escopo.
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </section>
 
     <p-dialog [(visible)]="showForm" [header]="editing() ? 'Editar Parâmetro' : 'Novo Parâmetro'"
-              [modal]="true" [style]="{width:'480px'}">
+              [modal]="true" [style]="{width:'32rem'}" [breakpoints]="{'640px': '94vw'}">
       <form [formGroup]="form" (ngSubmit)="submit()" class="param-form">
         @if (!editing()) {
           <div class="field">
-            <label>Chave *</label>
-            <input pInputText formControlName="key" placeholder="app.max_users" />
+            <label for="param-key">Chave *</label>
+            <input id="param-key" pInputText formControlName="key" placeholder="app.max_users" autocomplete="off" />
           </div>
           <div class="field">
-            <label>Grupo</label>
-            <input pInputText formControlName="group" placeholder="email" />
+            <label for="param-group">Grupo</label>
+            <input id="param-group" pInputText formControlName="group" placeholder="email" autocomplete="off" />
           </div>
           <div class="field">
-            <label>Tipo *</label>
-            <p-select formControlName="type" [options]="typeOptions" optionLabel="label" optionValue="value" />
+            <label for="param-type">Tipo *</label>
+            <p-select inputId="param-type" formControlName="type" [options]="typeOptions" optionLabel="label" optionValue="value" />
           </div>
           <div class="field">
-            <label>Escopo *</label>
-            <p-select formControlName="scope" [options]="scopeOptions" optionLabel="label" optionValue="value" />
+            <label for="param-scope">Escopo *</label>
+            <p-select inputId="param-scope" formControlName="scope" [options]="scopeOptions" optionLabel="label" optionValue="value" />
           </div>
         }
         <div class="field">
-          <label>Valor *</label>
-          <input pInputText formControlName="value" />
+          <label for="param-value">Valor *</label>
+          <input id="param-value" pInputText formControlName="value" autocomplete="off" />
         </div>
         <div class="field">
-          <label>Descrição</label>
-          <input pInputText formControlName="description" />
+          <label for="param-description">Descrição</label>
+          <input id="param-description" pInputText formControlName="description" autocomplete="off" />
         </div>
         <div class="form-actions">
           <p-button label="Cancelar" [text]="true" (onClick)="showForm = false" />
-          <p-button label="Salvar" (onClick)="submit()" [loading]="saving()" [disabled]="form.invalid" />
+          <p-button label="Salvar" type="submit" [loading]="saving()" [disabled]="form.invalid" />
         </div>
       </form>
     </p-dialog>
   `,
   styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .group-header { font-weight: 700; color: var(--p-primary-color); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    code { background: var(--p-surface-100); padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
     .value-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .desc-cell { max-width: 240px; color: var(--p-text-muted-color); font-size: 0.875rem; }
-    .row-actions { display: flex; gap: 2px; }
-    .param-form { display: flex; flex-direction: column; gap: 1rem; padding-top: 0.5rem; }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-weight: 500; font-size: 0.875rem; }
-    .form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem; }
+    .param-form { display: grid; gap: 1rem; }
+    .actions-col { text-align: right; width: 8rem; }
   `]
 })
 export class ParametersListComponent implements OnInit {
@@ -120,6 +155,8 @@ export class ParametersListComponent implements OnInit {
   private confirm = inject(ConfirmationService);
 
   parameters = signal<SystemParameter[]>([]);
+  groupCount = computed(() => new Set(this.parameters().map(parameter => parameter.group ?? 'Geral')).size);
+  readOnlyCount = computed(() => this.parameters().filter(parameter => parameter.isReadOnly).length);
   loading = signal(false);
   saving = signal(false);
   showForm = false;

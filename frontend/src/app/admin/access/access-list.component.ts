@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -9,7 +9,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AccessService } from './access.service';
-import { AppRole, PERMISSION_OPERATIONS, PERMISSION_LABELS } from './access.model';
+import { AppRole } from './access.model';
 
 interface PermissionRow { entitySlug: string; create: boolean; read: boolean; update: boolean; delete: boolean; }
 
@@ -20,65 +20,105 @@ interface PermissionRow { entitySlug: string; create: boolean; read: boolean; up
     TagModule, DialogModule, ToggleSwitchModule, ConfirmDialogModule
   ],
   providers: [ConfirmationService],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <p-confirmDialog />
 
-    <div class="page-header">
-      <h2>Controle de Acesso — Roles</h2>
-      <p-button label="Nova Role" icon="pi pi-plus" (onClick)="openCreate()" />
-    </div>
+    <section class="admin-page">
+      <div class="page-header">
+        <div>
+          <span class="page-kicker">Segurança</span>
+          <h1 class="page-title">Controle de acesso</h1>
+          <p class="page-description">Gerencie roles e permissões por entidade com leitura rápida de status e escopo.</p>
+        </div>
+        <div class="page-actions">
+          <p-button label="Nova role" icon="pi pi-plus" (onClick)="openCreate()" />
+        </div>
+      </div>
 
-    <p-table [value]="roles()" [loading]="loading()" [tableStyle]="{'min-width':'50rem'}">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Nome</th>
-          <th>Descrição</th>
-          <th>Permissões</th>
-          <th>Status</th>
-          <th style="width:120px"></th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-role>
-        <tr>
-          <td><strong>{{ role.name }}</strong></td>
-          <td class="desc-cell">{{ role.description }}</td>
-          <td>
-            <span class="perm-count">{{ role.permissions.length }} entidade(s)</span>
-          </td>
-          <td>
-            @if (role.isSystemRole) {
-              <p-tag value="Sistema" severity="info" />
-            } @else if (role.isActive) {
-              <p-tag value="Ativo" severity="success" />
-            } @else {
-              <p-tag value="Inativo" severity="secondary" />
-            }
-          </td>
-          <td>
-            <div class="row-actions">
-              <p-button icon="pi pi-shield" size="small" [text]="true" title="Permissões" (onClick)="openPermissions(role)" />
-              <p-button icon="pi pi-pencil" size="small" [text]="true" [disabled]="role.isSystemRole" (onClick)="openEdit(role)" />
-              <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" [disabled]="role.isSystemRole" (onClick)="confirmDelete(role)" />
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="emptymessage">
-        <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--p-text-muted-color)">Nenhuma role cadastrada.</td></tr>
-      </ng-template>
-    </p-table>
+      <div class="metric-strip" aria-label="Resumo de roles">
+        <div class="metric-card">
+          <span class="metric-label">Roles</span>
+          <strong class="metric-value">{{ roles().length }}</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Sistema</span>
+          <strong class="metric-value">{{ systemRoleCount() }}</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Permissões</span>
+          <strong class="metric-value">{{ permissionCount() }}</strong>
+        </div>
+      </div>
+
+      <div class="table-shell">
+        <div class="table-toolbar">
+          <div>
+            <strong class="toolbar-title">Roles cadastradas</strong>
+            <p class="toolbar-meta">Roles de sistema ficam protegidas contra edição e exclusão.</p>
+          </div>
+        </div>
+
+        <p-table [value]="roles()" [loading]="loading()" [tableStyle]="{'min-width':'50rem'}" rowHover styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Nome</th>
+              <th>Descrição</th>
+              <th>Permissões</th>
+              <th>Status</th>
+              <th class="actions-col">Ações</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-role>
+            <tr>
+              <td><strong>{{ role.name }}</strong></td>
+              <td class="desc-cell">{{ role.description || 'Sem descrição' }}</td>
+              <td>
+                <span class="perm-count">{{ role.permissions.length }} entidade(s)</span>
+              </td>
+              <td>
+                @if (role.isSystemRole) {
+                  <p-tag value="Sistema" severity="info" />
+                } @else if (role.isActive) {
+                  <p-tag value="Ativo" severity="success" />
+                } @else {
+                  <p-tag value="Inativo" severity="secondary" />
+                }
+              </td>
+              <td>
+                <div class="row-actions">
+                  <p-button icon="pi pi-shield" size="small" [text]="true" ariaLabel="Editar permissões" title="Permissões" (onClick)="openPermissions(role)" />
+                  <p-button icon="pi pi-pencil" size="small" [text]="true" ariaLabel="Editar role" [disabled]="role.isSystemRole" (onClick)="openEdit(role)" />
+                  <p-button icon="pi pi-trash" size="small" [text]="true" ariaLabel="Excluir role" severity="danger" [disabled]="role.isSystemRole" (onClick)="confirmDelete(role)" />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <strong>Nenhuma role cadastrada</strong>
+                  Crie roles para segmentar permissões por operação.
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </section>
 
     <!-- Role Form Dialog -->
     <p-dialog [(visible)]="showRoleForm" [header]="editingRole() ? 'Editar Role' : 'Nova Role'"
-              [modal]="true" [style]="{width:'420px'}">
+              [modal]="true" [style]="{width:'30rem'}" [breakpoints]="{'640px': '94vw'}">
       <form [formGroup]="roleForm" (ngSubmit)="submitRole()" class="role-form">
         <div class="field">
-          <label>Nome *</label>
-          <input pInputText formControlName="name" placeholder="Ex: Gestor" />
+          <label for="role-name">Nome *</label>
+          <input id="role-name" pInputText formControlName="name" placeholder="Ex: Gestor" autocomplete="off" />
         </div>
         <div class="field">
-          <label>Descrição</label>
-          <input pInputText formControlName="description" />
+          <label for="role-description">Descrição</label>
+          <input id="role-description" pInputText formControlName="description" autocomplete="off" />
         </div>
         @if (editingRole()) {
           <div class="field field-inline">
@@ -88,20 +128,24 @@ interface PermissionRow { entitySlug: string; create: boolean; read: boolean; up
         }
         <div class="form-actions">
           <p-button label="Cancelar" [text]="true" (onClick)="showRoleForm = false" />
-          <p-button label="Salvar" (onClick)="submitRole()" [loading]="saving()" [disabled]="roleForm.invalid" />
+          <p-button label="Salvar" type="submit" [loading]="saving()" [disabled]="roleForm.invalid" />
         </div>
       </form>
     </p-dialog>
 
     <!-- Permissions Dialog -->
     <p-dialog [(visible)]="showPermissions" header="Permissões da Role"
-              [modal]="true" [style]="{width:'640px'}">
+              [modal]="true" [style]="{width:'44rem'}" [breakpoints]="{'760px': '94vw'}">
       @if (permissionRole()) {
         <div class="perm-header">
-          <strong>{{ permissionRole()!.name }}</strong>
+          <div>
+            <strong>{{ permissionRole()!.name }}</strong>
+            <p>Defina operações permitidas por slug de entidade.</p>
+          </div>
           <p-button label="Adicionar Entidade" icon="pi pi-plus" size="small" [text]="true" (onClick)="addPermissionRow()" />
         </div>
-        <p-table [value]="permissionRows()" [tableStyle]="{'min-width':'500px'}">
+        <div class="table-shell permission-table">
+        <p-table [value]="permissionRows()" [tableStyle]="{'min-width':'500px'}" styleClass="p-datatable-sm">
           <ng-template pTemplate="header">
             <tr>
               <th>Slug da Entidade</th>
@@ -114,16 +158,17 @@ interface PermissionRow { entitySlug: string; create: boolean; read: boolean; up
           </ng-template>
           <ng-template pTemplate="body" let-row let-i="rowIndex">
             <tr>
-              <td><input pInputText [(ngModel)]="permissionRows()[i].entitySlug" placeholder="ex: ticket" style="width:100%" /></td>
+              <td><input pInputText [(ngModel)]="permissionRows()[i].entitySlug" placeholder="ex: ticket" aria-label="Slug da entidade" style="width:100%" /></td>
               <td style="text-align:center"><p-toggleswitch [(ngModel)]="permissionRows()[i].create" /></td>
               <td style="text-align:center"><p-toggleswitch [(ngModel)]="permissionRows()[i].read" /></td>
               <td style="text-align:center"><p-toggleswitch [(ngModel)]="permissionRows()[i].update" /></td>
               <td style="text-align:center"><p-toggleswitch [(ngModel)]="permissionRows()[i].delete" /></td>
-              <td><p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" (onClick)="removePermissionRow(i)" /></td>
+              <td><p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" ariaLabel="Remover linha de permissão" (onClick)="removePermissionRow(i)" /></td>
             </tr>
           </ng-template>
         </p-table>
-        <div class="form-actions" style="margin-top:1rem">
+        </div>
+        <div class="form-actions permissions-actions">
           <p-button label="Cancelar" [text]="true" (onClick)="showPermissions = false" />
           <p-button label="Salvar Permissões" [loading]="savingPerms()" (onClick)="savePermissions()" />
         </div>
@@ -131,16 +176,14 @@ interface PermissionRow { entitySlug: string; create: boolean; read: boolean; up
     </p-dialog>
   `,
   styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .desc-cell { color: var(--p-text-muted-color); font-size: 0.875rem; }
     .perm-count { font-size: 0.875rem; color: var(--p-text-muted-color); }
-    .row-actions { display: flex; gap: 2px; }
-    .role-form { display: flex; flex-direction: column; gap: 1rem; padding-top: 0.5rem; }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-weight: 500; font-size: 0.875rem; }
-    .field-inline { flex-direction: row; align-items: center; justify-content: space-between; }
-    .form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
-    .perm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .role-form { display: grid; gap: 1rem; }
+    .perm-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem; }
+    .perm-header p { color: var(--app-muted); font-size: 0.875rem; margin-top: 0.25rem; }
+    .permission-table { overflow-x: auto; }
+    .permissions-actions { margin-top: 1rem; }
+    .actions-col { text-align: right; width: 8rem; }
   `]
 })
 export class AccessListComponent implements OnInit {
@@ -150,6 +193,8 @@ export class AccessListComponent implements OnInit {
   private confirm = inject(ConfirmationService);
 
   roles = signal<AppRole[]>([]);
+  systemRoleCount = computed(() => this.roles().filter(role => role.isSystemRole).length);
+  permissionCount = computed(() => this.roles().reduce((total, role) => total + role.permissions.length, 0));
   loading = signal(false);
   saving = signal(false);
   savingPerms = signal(false);

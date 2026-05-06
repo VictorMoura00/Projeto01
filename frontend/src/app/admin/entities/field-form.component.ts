@@ -1,4 +1,4 @@
-import { Component, inject, input, output, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, OnChanges } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -11,19 +11,21 @@ import { FieldDefinition, FieldType, FIELD_TYPE_LABELS } from './entity.model';
 @Component({
   selector: 'app-field-form',
   imports: [ReactiveFormsModule, InputTextModule, SelectModule, ToggleSwitchModule, ButtonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="field-form">
       <div class="field">
-        <label>Nome *</label>
-        <input pInputText formControlName="name" placeholder="Ex: Título" (input)="autoSlug()" />
+        <label for="field-name">Nome *</label>
+        <input id="field-name" pInputText formControlName="name" placeholder="Ex: Título" autocomplete="off" (input)="autoSlug()" />
       </div>
       <div class="field">
-        <label>Slug *</label>
-        <input pInputText formControlName="slug" placeholder="titulo" />
+        <label for="field-slug">Slug *</label>
+        <input id="field-slug" pInputText formControlName="slug" placeholder="titulo" autocomplete="off" />
+        <small>Identificador técnico usado em APIs e permissões.</small>
       </div>
       <div class="field">
-        <label>Tipo *</label>
-        <p-select formControlName="fieldType" [options]="fieldTypeOptions" optionLabel="label" optionValue="value" />
+        <label for="field-type">Tipo *</label>
+        <p-select inputId="field-type" formControlName="fieldType" [options]="fieldTypeOptions" optionLabel="label" optionValue="value" />
       </div>
       <div class="field-row">
         <div class="field field-inline">
@@ -46,12 +48,22 @@ import { FieldDefinition, FieldType, FIELD_TYPE_LABELS } from './entity.model';
     </form>
   `,
   styles: [`
-    .field-form { display: flex; flex-direction: column; gap: 1rem; }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-weight: 500; font-size: 0.875rem; }
-    .field-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-    .field-inline { flex-direction: row; align-items: center; justify-content: space-between; background: var(--p-surface-50); padding: 0.5rem 0.75rem; border-radius: 6px; }
-    .form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem; }
+    .field-form {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .field-row {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (max-width: 640px) {
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+    }
   `]
 })
 export class FieldFormComponent implements OnChanges {

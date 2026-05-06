@@ -1,4 +1,4 @@
-import { Component, inject, input, output, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, OnChanges } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -11,24 +11,26 @@ import { EntityDefinition } from './entity.model';
 @Component({
   selector: 'app-entity-form',
   imports: [ReactiveFormsModule, InputTextModule, TextareaModule, ToggleSwitchModule, ButtonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="entity-form">
       <div class="field">
-        <label>Nome *</label>
-        <input pInputText formControlName="name" placeholder="Ex: Chamado TI" (input)="autoSlug()" />
+        <label for="entity-name">Nome *</label>
+        <input id="entity-name" pInputText formControlName="name" placeholder="Ex: Chamado TI" autocomplete="off" (input)="autoSlug()" />
       </div>
       <div class="field">
-        <label>Slug *</label>
-        <input pInputText formControlName="slug" placeholder="chamado-ti" />
+        <label for="entity-slug">Slug *</label>
+        <input id="entity-slug" pInputText formControlName="slug" placeholder="chamado-ti" autocomplete="off" />
         <small>Usado internamente. Apenas letras minúsculas, números e hífens.</small>
       </div>
       <div class="field">
-        <label>Ícone</label>
-        <input pInputText formControlName="icon" placeholder="📋" maxlength="4" />
+        <label for="entity-icon">Ícone</label>
+        <input id="entity-icon" pInputText formControlName="icon" placeholder="pi pi-database" maxlength="32" autocomplete="off" />
+        <small>Use uma classe PrimeIcons, como pi pi-database, para manter consistência visual.</small>
       </div>
       <div class="field">
-        <label>Descrição</label>
-        <textarea pTextarea formControlName="description" rows="3" placeholder="Descreva o propósito desta entidade"></textarea>
+        <label for="entity-description">Descrição</label>
+        <textarea id="entity-description" pTextarea formControlName="description" rows="3" placeholder="Descreva o propósito desta entidade"></textarea>
       </div>
       @if (entity()) {
         <div class="field field-inline">
@@ -43,12 +45,10 @@ import { EntityDefinition } from './entity.model';
     </form>
   `,
   styles: [`
-    .entity-form { display: flex; flex-direction: column; gap: 1rem; }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-weight: 500; font-size: 0.875rem; }
-    .field small { color: var(--p-text-muted-color); font-size: 0.75rem; }
-    .field-inline { flex-direction: row; align-items: center; justify-content: space-between; }
-    .form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem; }
+    .entity-form {
+      display: grid;
+      gap: 1rem;
+    }
   `]
 })
 export class EntityFormComponent implements OnChanges {

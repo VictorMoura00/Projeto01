@@ -1,12 +1,13 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TableModule } from 'primeng/table';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { EntitiesService } from './entities.service';
 import { EntityDefinition } from './entity.model';
@@ -16,67 +17,118 @@ import { EntityFormComponent } from './entity-form.component';
   selector: 'app-entities-list',
   imports: [
     FormsModule, TableModule, ButtonModule, InputTextModule,
-    TagModule, ConfirmDialogModule, DialogModule, EntityFormComponent
+    TagModule, ConfirmDialogModule, DialogModule, TooltipModule, EntityFormComponent
   ],
   providers: [ConfirmationService],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <p-confirmDialog />
 
-    <div class="page-header">
-      <h2>Entidades</h2>
-      <p-button label="Nova Entidade" icon="pi pi-plus" (onClick)="openCreate()" />
-    </div>
+    <section class="admin-page">
+      <div class="page-header">
+        <div>
+          <span class="page-kicker">Modelo de dados</span>
+          <h1 class="page-title">Entidades</h1>
+          <p class="page-description">Defina os objetos centrais do sistema, seus slugs e a quantidade de campos configurados.</p>
+        </div>
+        <div class="page-actions">
+          <p-button label="Nova entidade" icon="pi pi-plus" (onClick)="openCreate()" />
+        </div>
+      </div>
 
-    <div class="search-bar">
-      <input pInputText [(ngModel)]="search" placeholder="Buscar entidades..." (input)="onSearch()" />
-    </div>
+      <div class="metric-strip" aria-label="Resumo de entidades">
+        <div class="metric-card">
+          <span class="metric-label">Total</span>
+          <strong class="metric-value">{{ totalCount() }}</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Ativas na página</span>
+          <strong class="metric-value">{{ activeCount() }}</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Campos na página</span>
+          <strong class="metric-value">{{ fieldTotal() }}</strong>
+        </div>
+      </div>
 
-    <p-table
-      [value]="entities()"
-      [loading]="loading()"
-      [paginator]="true"
-      [rows]="20"
-      [totalRecords]="totalCount()"
-      [lazy]="true"
-      (onLazyLoad)="onPage($event)"
-      rowHover
-      styleClass="p-datatable-sm"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Nome</th>
-          <th>Slug</th>
-          <th>Campos</th>
-          <th>Status</th>
-          <th style="width:120px"></th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-entity>
-        <tr>
-          <td>
-            <span class="entity-icon">{{ entity.icon || '📋' }}</span>
-            {{ entity.name }}
-          </td>
-          <td><code>{{ entity.slug }}</code></td>
-          <td>{{ entity.fieldCount }}</td>
-          <td>
-            <p-tag [value]="entity.isActive ? 'Ativo' : 'Inativo'"
-                   [severity]="entity.isActive ? 'success' : 'secondary'" />
-          </td>
-          <td>
-            <p-button icon="pi pi-pencil" size="small" [text]="true" (onClick)="openEdit(entity)" />
-            <p-button icon="pi pi-table" size="small" [text]="true" (onClick)="openFields(entity)" pTooltip="Gerenciar Campos" />
-            <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" (onClick)="confirmDelete(entity)" />
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="emptymessage">
-        <tr><td colspan="5" style="text-align:center">Nenhuma entidade encontrada.</td></tr>
-      </ng-template>
-    </p-table>
+      <div class="table-shell">
+        <div class="table-toolbar">
+          <div>
+            <strong class="toolbar-title">Catálogo de entidades</strong>
+            <p class="toolbar-meta">Linhas paginadas com ações rápidas de campos, edição e exclusão.</p>
+          </div>
+          <label class="search-control">
+            <span class="pi pi-search" aria-hidden="true"></span>
+            <input pInputText [(ngModel)]="search" placeholder="Buscar por nome ou slug" aria-label="Buscar entidades" (input)="onSearch()" />
+          </label>
+        </div>
+
+        <p-table
+          [value]="entities()"
+          [loading]="loading()"
+          [paginator]="true"
+          [rows]="20"
+          [totalRecords]="totalCount()"
+          [lazy]="true"
+          [rowsPerPageOptions]="[10, 20, 50]"
+          (onLazyLoad)="onPage($event)"
+          rowHover
+          styleClass="p-datatable-sm"
+          [tableStyle]="{'min-width': '56rem'}"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Nome</th>
+              <th>Slug</th>
+              <th>Campos</th>
+              <th>Status</th>
+              <th class="actions-col">Ações</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-entity>
+            <tr>
+              <td>
+                <span class="entity-name">
+                  <span class="entity-mark"><i class="pi pi-database" aria-hidden="true"></i></span>
+                  <span>
+                    <strong>{{ entity.name }}</strong>
+                    @if (entity.description) {
+                      <small>{{ entity.description }}</small>
+                    }
+                  </span>
+                </span>
+              </td>
+              <td><code>{{ entity.slug }}</code></td>
+              <td><span class="field-count">{{ entity.fieldCount }}</span></td>
+              <td>
+                <p-tag [value]="entity.isActive ? 'Ativo' : 'Inativo'"
+                       [severity]="entity.isActive ? 'success' : 'secondary'" />
+              </td>
+              <td>
+                <div class="row-actions">
+                  <p-button icon="pi pi-pencil" size="small" [text]="true" ariaLabel="Editar entidade" pTooltip="Editar" (onClick)="openEdit(entity)" />
+                  <p-button icon="pi pi-table" size="small" [text]="true" ariaLabel="Gerenciar campos" pTooltip="Gerenciar campos" (onClick)="openFields(entity)" />
+                  <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" ariaLabel="Excluir entidade" pTooltip="Excluir" (onClick)="confirmDelete(entity)" />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <strong>Nenhuma entidade encontrada</strong>
+                  Ajuste a busca ou crie uma nova entidade para começar.
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </section>
 
     <p-dialog [(visible)]="showForm" [header]="editingEntity() ? 'Editar Entidade' : 'Nova Entidade'"
-              [modal]="true" [style]="{width: '480px'}">
+              [modal]="true" [style]="{width: '32rem'}" [breakpoints]="{'640px': '94vw'}">
       <app-entity-form
         [entity]="editingEntity()"
         (saved)="onSaved()"
@@ -85,11 +137,35 @@ import { EntityFormComponent } from './entity-form.component';
     </p-dialog>
   `,
   styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .search-bar { margin-bottom: 1rem; }
-    .search-bar input { width: 320px; }
-    .entity-icon { margin-right: 6px; }
-    code { background: var(--p-surface-100); padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+    .entity-name {
+      align-items: center;
+      display: flex;
+    }
+
+    .entity-name strong,
+    .entity-name small {
+      display: block;
+    }
+
+    .entity-name small {
+      color: var(--app-muted);
+      font-size: 0.8125rem;
+      margin-top: 0.15rem;
+      max-width: 34rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .field-count {
+      color: var(--app-text);
+      font-weight: 700;
+    }
+
+    .actions-col {
+      text-align: right;
+      width: 9rem;
+    }
   `]
 })
 export class EntitiesListComponent implements OnInit {
@@ -101,6 +177,8 @@ export class EntitiesListComponent implements OnInit {
   entities = signal<EntityDefinition[]>([]);
   loading = signal(false);
   totalCount = signal(0);
+  activeCount = computed(() => this.entities().filter(entity => entity.isActive).length);
+  fieldTotal = computed(() => this.entities().reduce((total, entity) => total + entity.fieldCount, 0));
   search = '';
   showForm = false;
   editingEntity = signal<EntityDefinition | null>(null);
@@ -118,7 +196,11 @@ export class EntitiesListComponent implements OnInit {
   }
 
   onSearch() { this.load(1); }
-  onPage(event: any) { this.load(Math.floor(event.first / event.rows) + 1); }
+  onPage(event: TableLazyLoadEvent) {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? 20;
+    this.load(Math.floor(first / rows) + 1);
+  }
 
   openCreate() { this.editingEntity.set(null); this.showForm = true; }
   openEdit(entity: EntityDefinition) { this.editingEntity.set(entity); this.showForm = true; }
