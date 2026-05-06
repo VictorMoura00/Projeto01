@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Modules\Access\AdminCore.Modules.Access\AdminCore.Modules.Access.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Parameters\AdminCore.Modules.Parameters\AdminCore.Modules.Parameters.csproj" />
   </ItemGroup>
 
 </Project>

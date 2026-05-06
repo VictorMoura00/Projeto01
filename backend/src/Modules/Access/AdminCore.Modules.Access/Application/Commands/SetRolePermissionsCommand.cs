@@ -29,7 +29,7 @@ public class SetRolePermissionsHandler(AccessDbContext db)
         {
             if (p.Operations != 0)
             {
-                role.Permissions.Add(new RolePermission
+                db.RolePermissions.Add(new RolePermission
                 {
                     RoleId = role.Id,
                     EntitySlug = p.EntitySlug,

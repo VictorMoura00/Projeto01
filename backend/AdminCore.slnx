@@ -28,5 +28,6 @@
     <Project Path="tests/AdminCore.Modules.Access.Tests/AdminCore.Modules.Access.Tests.csproj" />
     <Project Path="tests/AdminCore.Modules.Auth.Tests/AdminCore.Modules.Auth.Tests.csproj" />
     <Project Path="tests/AdminCore.Modules.Entities.Tests/AdminCore.Modules.Entities.Tests.csproj" />
+    <Project Path="tests/AdminCore.Modules.Parameters.Tests/AdminCore.Modules.Parameters.Tests.csproj" />
   </Folder>
 </Solution>
