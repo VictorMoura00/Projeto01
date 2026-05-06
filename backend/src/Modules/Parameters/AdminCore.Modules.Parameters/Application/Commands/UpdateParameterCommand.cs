@@ -1,5 +1,6 @@
 using AdminCore.Modules.Parameters.Application.DTOs;
 using AdminCore.Modules.Parameters.Infrastructure.Persistence;
+using AdminCore.Modules.Parameters.Infrastructure.Services;
 using AdminCore.Shared.Kernel.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,7 @@ public record UpdateParameterCommand(
     string? Description
 );
 
-public class UpdateParameterHandler(ParametersDbContext db)
+public class UpdateParameterHandler(ParametersDbContext db, ICachedParameterService? cache = null)
 {
     public async Task<SystemParameterDto> Handle(UpdateParameterCommand cmd, CancellationToken ct)
     {
@@ -27,6 +28,7 @@ public class UpdateParameterHandler(ParametersDbContext db)
         param.Description = cmd.Description;
 
         await db.SaveChangesAsync(ct);
+        cache?.Invalidate(cmd.TenantId, param.Key);
         return CreateParameterHandler.ToDto(param);
     }
 }

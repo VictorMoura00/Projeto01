@@ -1,4 +1,5 @@
 using AdminCore.Modules.Parameters.Infrastructure.Persistence;
+using AdminCore.Modules.Parameters.Infrastructure.Services;
 using AdminCore.Shared.Kernel.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +13,9 @@ public class ParametersModule : IModule
     {
         services.AddDbContext<ParametersDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddMemoryCache();
+        services.AddScoped<ICachedParameterService, CachedParameterService>();
 
         return services;
     }
