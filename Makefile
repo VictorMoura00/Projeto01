@@ -113,7 +113,7 @@ logs:
 ## ─── MIGRATIONS ──────────────────────────────────────────────────────────────
 
 ## migrate: aplica migrations de todos os módulos
-migrate:
+migrate: _restore
 	@echo "▶  Aplicando migrations..."
 	@export PATH="$$PATH:$(HOME)/.dotnet/tools"; \
 	$(MAKE) _migrate_one CTX=EntitiesDbContext   MOD=$(BACK_DIR)/src/Modules/Entities/AdminCore.Modules.Entities; \
@@ -123,6 +123,13 @@ migrate:
 	$(MAKE) _migrate_one CTX=AuthDbContext       MOD=$(BACK_DIR)/src/Modules/Auth/AdminCore.Modules.Auth; \
 	$(MAKE) _migrate_one CTX=FormBuilderDbContext MOD=$(BACK_DIR)/src/Modules/FormBuilder/AdminCore.Modules.FormBuilder
 	@echo "✔  Migrations aplicadas"
+
+_restore:
+	@if [ ! -f "$(API_SLN)" ] || [ ! -d "$(BACK_DIR)/src/Shared/AdminCore.Shared.Kernel/obj" ]; then \
+		echo "▶  Restaurando pacotes NuGet..."; \
+		dotnet restore $(API_SLN); \
+		echo "✔  Restore concluído"; \
+	fi
 
 _migrate_one:
 	@export PATH="$$PATH:$(HOME)/.dotnet/tools"; \

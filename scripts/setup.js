@@ -31,7 +31,16 @@ console.log('▶  Iniciando PostgreSQL...');
 run('docker compose -f docker-compose.dev.yml up -d --wait');
 console.log('✔  PostgreSQL pronto');
 
-// 3. Rodar migrations
+// 3. Restore e build do backend
+console.log('▶  Restaurando pacotes NuGet...');
+run('dotnet restore backend/AdminCore.slnx');
+console.log('✔  NuGet restore concluído');
+
+console.log('▶  Buildando backend...');
+run('dotnet build backend/AdminCore.slnx --no-restore');
+console.log('✔  Build concluído');
+
+// 4. Rodar migrations
 console.log('▶  Aplicando migrations...');
 require('./migrate.js');
 

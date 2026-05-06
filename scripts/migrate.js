@@ -33,7 +33,7 @@ for (const { ctx, mod } of MODULES) {
   }
 
   console.log(`  → ${ctx}`);
-  run(`dotnet ef database update --context ${ctx} -p ${mod} -s ${API_PROJ} --no-build`);
+  run(`dotnet ef database update --context ${ctx} -p ${mod} -s ${API_PROJ}`);
 }
 
 console.log('✔  Migrations aplicadas');
