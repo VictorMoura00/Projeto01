@@ -1,6 +1,7 @@
 using AdminCore.Modules.Access;
 using AdminCore.Modules.Auth;
 using AdminCore.Modules.Entities;
+using AdminCore.Modules.FormBuilder;
 using AdminCore.Modules.Parameters;
 using AdminCore.Modules.Tenants;
 using Wolverine;
@@ -16,6 +17,7 @@ public static class WolverineExtensions
             opts.Discovery.IncludeAssembly(typeof(AuthModule).Assembly);
             opts.Discovery.IncludeAssembly(typeof(TenantsModule).Assembly);
             opts.Discovery.IncludeAssembly(typeof(EntitiesModule).Assembly);
+            opts.Discovery.IncludeAssembly(typeof(FormBuilderModule).Assembly);
             opts.Discovery.IncludeAssembly(typeof(AccessModule).Assembly);
             opts.Discovery.IncludeAssembly(typeof(ParametersModule).Assembly);
         });

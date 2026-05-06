@@ -12,6 +12,9 @@
   <Folder Name="/src/Modules/Entities/">
     <Project Path="src/Modules/Entities/AdminCore.Modules.Entities/AdminCore.Modules.Entities.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/FormBuilder/">
+    <Project Path="src/Modules/FormBuilder/AdminCore.Modules.FormBuilder/AdminCore.Modules.FormBuilder.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Parameters/">
     <Project Path="src/Modules/Parameters/AdminCore.Modules.Parameters/AdminCore.Modules.Parameters.csproj" />
   </Folder>

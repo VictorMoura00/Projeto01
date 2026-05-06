@@ -1,6 +1,7 @@
 using AdminCore.Modules.Access;
 using AdminCore.Modules.Auth;
 using AdminCore.Modules.Entities;
+using AdminCore.Modules.FormBuilder;
 using AdminCore.Modules.Parameters;
 using AdminCore.Modules.Tenants;
 using AdminCore.Shared.Kernel.Interfaces;
@@ -16,6 +17,7 @@ public static class ModulesExtensions
             new AuthModule(),
             new TenantsModule(),
             new EntitiesModule(),
+            new FormBuilderModule(),
             new AccessModule(),
             new ParametersModule(),
         ];

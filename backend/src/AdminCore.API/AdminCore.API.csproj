@@ -18,6 +18,7 @@
     <ProjectReference Include="..\Modules\Auth\AdminCore.Modules.Auth\AdminCore.Modules.Auth.csproj" />
     <ProjectReference Include="..\Modules\Tenants\AdminCore.Modules.Tenants\AdminCore.Modules.Tenants.csproj" />
     <ProjectReference Include="..\Modules\Entities\AdminCore.Modules.Entities\AdminCore.Modules.Entities.csproj" />
+    <ProjectReference Include="..\Modules\FormBuilder\AdminCore.Modules.FormBuilder\AdminCore.Modules.FormBuilder.csproj" />
     <ProjectReference Include="..\Modules\Access\AdminCore.Modules.Access\AdminCore.Modules.Access.csproj" />
     <ProjectReference Include="..\Modules\Parameters\AdminCore.Modules.Parameters\AdminCore.Modules.Parameters.csproj" />
   </ItemGroup>
