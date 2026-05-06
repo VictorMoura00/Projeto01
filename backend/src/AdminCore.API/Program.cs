@@ -8,6 +8,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddCorsPolicy(builder.Configuration);
 builder.Services.AddModules(builder.Configuration);
+builder.Services.AddApiAuthentication(builder.Configuration);
 
 builder.Host.AddWolverineModules();
 
@@ -16,7 +17,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
+app.UseApiExceptionHandling();
 app.UseCorsPolicy();
+app.UseAuthentication();
+app.UseCurrentTenant();
 app.UseAuthorization();
 app.MapControllers();
 

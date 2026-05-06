@@ -1,4 +1,6 @@
 using AdminCore.Modules.Auth.Infrastructure.Persistence;
+using AdminCore.Modules.Auth.Infrastructure.Security;
+using AdminCore.Modules.Auth.Domain;
 using AdminCore.Shared.Kernel.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +14,12 @@ public class AuthModule : IModule
     {
         services.AddDbContext<AuthDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddIdentityCore<AppUser>()
+            .AddRoles<AppRole>()
+            .AddEntityFrameworkStores<AuthDbContext>();
+
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         return services;
     }
