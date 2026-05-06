@@ -25,11 +25,11 @@ O projeto AdminCore teve implementações significativas nas Waves A e B, com en
 | Módulo | Domínio | Handlers | Controller | Migrations | Testes Reais |
 |--------|---------|----------|------------|------------|--------------|
 | **Shared.Kernel** | ✅ | — | — | — | — |
-| **Auth** | ✅ | ✅ Login, Refresh, Register | ✅ `/auth/*` | ✅ Init | ✅ 5 testes (AuthHandlerTests) |
+| **Auth** | ✅ | ✅ Login, Refresh, Register | ✅ `/auth/*` | ✅ Init | ✅ 5 testes |
 | **Tenants** | ✅ | ✅ | ✅ | ✅ Init | ❌ Stub |
-| **Entities** | ✅ | ✅ Full CRUD + Reorder | ✅ | ✅ Init | ❌ Stub |
-| **Access** | ✅ | ✅ Full CRUD + Permissions | ✅ | ✅ Init | ❌ Stub |
-| **Parameters** | ✅ | ✅ + Cache | ✅ | ✅ Init | ❌ Stub |
+| **Entities** | ✅ | ✅ Full CRUD + Reorder | ✅ | ✅ Init | ✅ 18 testes |
+| **Access** | ✅ | ✅ Full CRUD + Permissions | ✅ | ✅ Init | ✅ 8 testes |
+| **Parameters** | ✅ | ✅ + Cache | ✅ | ✅ Init | ✅ 9 testes |
 | **FormBuilder** | ✅ | ✅ CRUD + Publish + Duplicate | ✅ `/admin/forms/*` | ❌ **PENDENTE** | ❌ Nenhum |
 
 ### Infraestrutura Entregue
@@ -43,8 +43,8 @@ O projeto AdminCore teve implementações significativas nas Waves A e B, com en
 
 ### Infraestrutura Pendente
 
-- ❌ **Migrations do FormBuilder** — DbContext existe mas não tem migration inicial
-- ❌ **Testes de Entities, Access, Parameters** — projetos existem mas contêm apenas stubs
+- ✅ **Migrations do FormBuilder** — InitFormBuilder criada e aplicada
+- ✅ **Testes de Entities, Access, Parameters** — 40 testes totais passando
 - ❌ **Testes do FormBuilder** — nenhum projeto de teste criado
 - ❌ **OpenTelemetry + Serilog estruturado**
 - ❌ **Audit log por operação**
@@ -127,11 +127,11 @@ As seguintes mudanças estavam no working tree antes da implementação do Codex
 
 ## Riscos Técnicos Atuais
 
-1. **Bootstrap do primeiro admin** — `POST /auth/register` pode ser admin-only, mas sem seed não há como criar o primeiro usuário. **Recomendação:** implementar um endpoint `/auth/bootstrap` ou seed no `Program.cs` para dev.
+1. ~~**Bootstrap do primeiro admin**~~ — ✅ `DevelopmentSeedExtensions` cria tenant + admin automaticamente em Development.
 
-2. **FormBuilder sem migration** — O módulo existe em código mas não há tabela no banco. Qualquer chamada ao controller vai falhar.
+2. ~~**FormBuilder sem migration**~~ — ✅ Migration `InitFormBuilder` criada e aplicada ao PostgreSQL.
 
-3. **Testes em stubs** — 3 projetos de teste com `UnitTest1.cs` vazio. Isso é risco para refatorações futuras.
+3. ~~**Testes em stubs**~~ — ✅ 40 testes reais passando (Auth 5, Entities 18, Access 8, Parameters 9).
 
 4. **Frontend auth sem tratamento de 403** — O interceptor lida com 401 (refresh/logout), mas 403 (ForbiddenException) não mostra toast específico.
 
@@ -143,16 +143,16 @@ As seguintes mudanças estavam no working tree antes da implementação do Codex
 
 ### Imediatos (antes de novas features)
 
-1. [ ] **Commitar UI improvements** do working tree
-2. [ ] **Criar migration do FormBuilder** e aplicar (`make migrate-add`)
-3. [ ] **Implementar bootstrap de admin** (seed ou endpoint público único)
+1. [x] **Commitar UI improvements** do working tree
+2. [x] **Criar migration do FormBuilder** e aplicar (`make migrate-add`)
+3. [x] **Implementar bootstrap de admin** (seed via `DevelopmentSeedExtensions`)
 4. [ ] **Revisar secrets JWT** — mover para `UserSecrets` ou env vars
 
 ### Curto prazo (Wave A completa + Wave B frontend)
 
-5. [ ] **Testes reais de Entities handlers** (exemplo para outros módulos)
-6. [ ] **Testes reais de Access handlers**
-7. [ ] **Testes reais de Parameters handlers**
+5. [x] **Testes reais de Entities handlers** (18 testes)
+6. [x] **Testes reais de Access handlers** (8 testes)
+7. [x] **Testes reais de Parameters handlers** (9 testes)
 8. [ ] **Frontend Form Builder** — listagem, editor, preview ao vivo
 9. [ ] **Endpoints `/config/entities` públicos** para apps de negócio
 
