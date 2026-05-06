@@ -82,11 +82,12 @@ logs:
 migrate:
 	@echo "▶  Aplicando migrations..."
 	@export PATH="$$PATH:$(HOME)/.dotnet/tools"; \
-	$(MAKE) _migrate_one CTX=EntitiesDbContext  MOD=$(BACK_DIR)/src/Modules/Entities/AdminCore.Modules.Entities; \
-	$(MAKE) _migrate_one CTX=TenantsDbContext   MOD=$(BACK_DIR)/src/Modules/Tenants/AdminCore.Modules.Tenants; \
-	$(MAKE) _migrate_one CTX=AccessDbContext    MOD=$(BACK_DIR)/src/Modules/Access/AdminCore.Modules.Access; \
+	$(MAKE) _migrate_one CTX=EntitiesDbContext   MOD=$(BACK_DIR)/src/Modules/Entities/AdminCore.Modules.Entities; \
+	$(MAKE) _migrate_one CTX=TenantsDbContext    MOD=$(BACK_DIR)/src/Modules/Tenants/AdminCore.Modules.Tenants; \
+	$(MAKE) _migrate_one CTX=AccessDbContext     MOD=$(BACK_DIR)/src/Modules/Access/AdminCore.Modules.Access; \
 	$(MAKE) _migrate_one CTX=ParametersDbContext MOD=$(BACK_DIR)/src/Modules/Parameters/AdminCore.Modules.Parameters; \
-	$(MAKE) _migrate_one CTX=AuthDbContext      MOD=$(BACK_DIR)/src/Modules/Auth/AdminCore.Modules.Auth
+	$(MAKE) _migrate_one CTX=AuthDbContext       MOD=$(BACK_DIR)/src/Modules/Auth/AdminCore.Modules.Auth; \
+	$(MAKE) _migrate_one CTX=FormBuilderDbContext MOD=$(BACK_DIR)/src/Modules/FormBuilder/AdminCore.Modules.FormBuilder
 	@echo "✔  Migrations aplicadas"
 
 _migrate_one:
@@ -102,7 +103,7 @@ _migrate_one:
 ## migrate-status: mostra status das migrations
 migrate-status:
 	@export PATH="$$PATH:$(HOME)/.dotnet/tools"; \
-	for ctx in EntitiesDbContext TenantsDbContext AccessDbContext ParametersDbContext AuthDbContext; do \
+	for ctx in EntitiesDbContext TenantsDbContext AccessDbContext ParametersDbContext AuthDbContext FormBuilderDbContext; do \
 		echo "=== $$ctx ==="; \
 	done
 
