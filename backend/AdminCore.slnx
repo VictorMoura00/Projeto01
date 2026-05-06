@@ -1,0 +1,29 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AdminCore.API/AdminCore.API.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Access/">
+    <Project Path="src/Modules/Access/AdminCore.Modules.Access/AdminCore.Modules.Access.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Auth/">
+    <Project Path="src/Modules/Auth/AdminCore.Modules.Auth/AdminCore.Modules.Auth.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Entities/">
+    <Project Path="src/Modules/Entities/AdminCore.Modules.Entities/AdminCore.Modules.Entities.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Parameters/">
+    <Project Path="src/Modules/Parameters/AdminCore.Modules.Parameters/AdminCore.Modules.Parameters.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Tenants/">
+    <Project Path="src/Modules/Tenants/AdminCore.Modules.Tenants/AdminCore.Modules.Tenants.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/AdminCore.Shared.Kernel/AdminCore.Shared.Kernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AdminCore.Modules.Access.Tests/AdminCore.Modules.Access.Tests.csproj" />
+    <Project Path="tests/AdminCore.Modules.Auth.Tests/AdminCore.Modules.Auth.Tests.csproj" />
+    <Project Path="tests/AdminCore.Modules.Entities.Tests/AdminCore.Modules.Entities.Tests.csproj" />
+  </Folder>
+</Solution>

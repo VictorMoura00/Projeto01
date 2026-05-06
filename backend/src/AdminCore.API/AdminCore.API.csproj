@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.4" />
+    <PackageReference Include="WolverineFx.Http" Version="5.37.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\AdminCore.Shared.Kernel\AdminCore.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Modules\Auth\AdminCore.Modules.Auth\AdminCore.Modules.Auth.csproj" />
+    <ProjectReference Include="..\Modules\Tenants\AdminCore.Modules.Tenants\AdminCore.Modules.Tenants.csproj" />
+    <ProjectReference Include="..\Modules\Entities\AdminCore.Modules.Entities\AdminCore.Modules.Entities.csproj" />
+    <ProjectReference Include="..\Modules\Access\AdminCore.Modules.Access\AdminCore.Modules.Access.csproj" />
+    <ProjectReference Include="..\Modules\Parameters\AdminCore.Modules.Parameters\AdminCore.Modules.Parameters.csproj" />
+  </ItemGroup>
+
+</Project>

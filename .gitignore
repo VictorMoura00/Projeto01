@@ -1,0 +1,28 @@
+# .NET
+**/bin/
+**/obj/
+**/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.DS_Store
+
+# .NET secrets
+**/appsettings.*.local.json
+**/secrets.json
+
+# Node / Angular
+**/node_modules/
+**/dist/
+**/.angular/
+*.log
+
+# Docker volumes
+**/postgres_data/
+
+# IDE
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/mcp.json
