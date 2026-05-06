@@ -6,25 +6,26 @@
 - Estrutura do monolito modular (.NET 10)
 - Projetos: Shared.Kernel + 5 módulos + 3 projetos de testes
 - Entidades de domínio de todos os módulos
-- DbContexts isolados por schema PostgreSQL
-- Docker + docker-compose (PostgreSQL + API)
-- Wolverine configurado no host
-- JWT Bearer configurado
+- DbContexts isolados por schema PostgreSQL (auth, tenants, entities, access, parameters)
+- EF Core migrations iniciais de todos os módulos
+- Docker + Makefile para ambiente de desenvolvimento (`make dev`, `make migrate`, etc.)
+- Wolverine configurado no host com discovery por assembly
 - MCPs: PrimeNG, Angular, dotnet skills
-
-### 🔄 Em progresso
-- [ ] Classes de configuração para Program.cs (JwtConfig, CorsConfig, ModulesConfig)
-- [ ] Auth end-to-end (login, register, refresh token handlers + endpoints)
-- [ ] Setup Angular 21 (PrimeNG, lazy routing, interceptors)
+- Extension classes para Program.cs (CorsExtensions, ModulesExtensions, WolverineExtensions)
+- **Entity Manager completo** — CRUD de EntityDefinition + FieldDefinition (back + front)
+  - Drag-and-drop para reordenar campos (Angular CDK)
+  - Campo JSONB para dados dinâmicos (EntityData.Payload)
+- **Parâmetros do Sistema completo** — CRUD agrupado com suporte a String/Number/Boolean/JSON
+- **Controle de Acesso completo** — Roles customizáveis + matriz de permissões por entidade
+- **White Label completo** — Gestão de tenants + editor de tema visual (color picker)
+- Angular 21 standalone + PrimeNG Aura + lazy routing + interceptors
 
 ### ⏳ Pendente — Fase 1
-- [ ] Middleware de tenant resolution (lê JWT → ICurrentTenant)
-- [ ] Entity Manager — CRUD de EntityDefinition + FieldDefinition (back + front)
-- [ ] Parâmetros do sistema — CRUD com cache
-- [ ] Controle de Acesso — roles + matriz de permissões
-- [ ] White Label — tema dinâmico por tenant
-- [ ] EF Core migrations iniciais de todos os módulos
-- [ ] Testes unitários básicos (Auth, Entities, Access handlers)
+- [ ] Auth end-to-end (login, refresh token, JWT claims com TenantId/UserId)
+- [ ] Middleware de tenant resolution (lê JWT → ICurrentTenant) — substitui DevTenantId hardcoded
+- [ ] Cache de parâmetros no backend com invalidação
+- [ ] Aplicação dinâmica do tema no Angular via CSS variables (usando `/tenants/{slug}/config`)
+- [ ] Testes unitários dos handlers (Entities, Access, Parameters)
 
 ## Fase 2 — Form Builder + Workflow
 
