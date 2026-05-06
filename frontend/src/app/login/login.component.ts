@@ -8,6 +8,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
 import { AuthService } from '../core/auth/auth.service';
+import { ThemeService } from '../core/theme/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -166,6 +167,7 @@ export class LoginComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private messageService = inject(MessageService);
+  private theme = inject(ThemeService);
 
   loading = signal(false);
   tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? this.route.snapshot.queryParamMap.get('tenant') ?? undefined;
@@ -174,6 +176,10 @@ export class LoginComponent {
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required]
   });
+
+  constructor() {
+    this.theme.loadTenantTheme(this.tenantSlug);
+  }
 
   emailInvalid(): boolean {
     const control = this.form.controls.email;
