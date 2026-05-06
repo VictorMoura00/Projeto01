@@ -16,6 +16,14 @@ FRONT_DIR := $(ROOT_DIR)/frontend
 API_SLN   := $(BACK_DIR)/AdminCore.slnx
 API_PROJ  := $(BACK_DIR)/src/AdminCore.API
 
+# Ports (overridable via .env)
+API_PORT       ?= 5000
+FRONTEND_PORT  ?= 4200
+POSTGRES_PORT  ?= 5432
+
+# Ensure .NET receives the correct HTTP port even if .env has malformed values
+export ASPNETCORE_HTTP_PORTS := $(API_PORT)
+
 EF := $(HOME)/.dotnet/tools/dotnet-ef
 EF_STARTUP := -s $(API_PROJ)
 
@@ -42,11 +50,33 @@ help:
 ## ─── DEV (tudo junto) ────────────────────────────────────────────────────────
 
 ## dev: sobe infra, roda migrations e inicia API + frontend
-dev: up migrate _start
+## A API escuta em 0.0.0.0 (todas as interfaces) para funcionar em WSL2, Docker,
+## VMs e qualquer ambiente. Se localhost não funcionar, tente 127.0.0.1 ou o IP local.
+dev: _env up migrate _front-deps _front-env _start
+
+_env:
+	@if [ ! -f "$(ROOT_DIR)/.env" ]; then \
+		echo "▶  Criando .env a partir de .env.example..."; \
+		cp $(ROOT_DIR)/.env.example $(ROOT_DIR)/.env; \
+		echo "✔  .env criado"; \
+	fi
+
+_front-deps:
+	@if [ ! -d "$(FRONT_DIR)/node_modules" ]; then \
+		echo "▶  Instalando dependências do frontend..."; \
+		cd $(FRONT_DIR) && npm install; \
+		echo "✔  Dependências do frontend instaladas"; \
+	fi
+
+_front-env:
+	@echo "▶  Gerando environment do frontend..."
+	@cd $(FRONT_DIR) && npm run env
+	@echo "✔  Environment do frontend gerado"
 
 _start:
-	@echo -e "$(COLOR_API)[API]$(COLOR_RESET)      http://localhost:5000"
-	@echo -e "$(COLOR_FRONT)[FRONTEND]$(COLOR_RESET) http://localhost:4200"
+	@echo -e "$(COLOR_API)[API]$(COLOR_RESET)      http://localhost:$(API_PORT)"
+	@echo -e "$(COLOR_FRONT)[FRONTEND]$(COLOR_RESET) http://localhost:$(FRONTEND_PORT)"
+	@echo -e "$(COLOR_API)[API]$(COLOR_RESET)      http://127.0.0.1:$(API_PORT)   ← tente este se localhost falhar"
 	@echo "──────────────────────────────────────────"
 	@( \
 		_prefix() { \
@@ -59,7 +89,7 @@ _start:
 		_prefix "$(COLOR_API)" "API     " \
 			dotnet run --project $(API_PROJ) --launch-profile http & \
 		_prefix "$(COLOR_FRONT)" "FRONTEND" \
-			bash -c "cd $(FRONT_DIR) && ng serve" & \
+			bash -c "cd $(FRONT_DIR) && ng serve --port $(FRONTEND_PORT)" & \
 		trap 'kill %1 %2 2>/dev/null' EXIT INT TERM; \
 		wait \
 	)
@@ -70,7 +100,7 @@ _start:
 up:
 	@echo "▶  Iniciando PostgreSQL..."
 	@docker compose -f docker-compose.dev.yml up -d --wait
-	@echo "✔  PostgreSQL pronto em localhost:5432"
+	@echo "✔  PostgreSQL pronto em localhost:$(POSTGRES_PORT)"
 
 ## down: para e remove os containers de dev
 down:

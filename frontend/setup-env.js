@@ -64,7 +64,7 @@ export const environment = {
 
   const outPath = path.join(__dirname, 'src', 'environments', 'environment.ts');
   fs.writeFileSync(outPath, output, 'utf-8');
-  console.log(\`✅ Environment gerado: apiUrl=\${apiUrl}\`);
+  console.log(`✅ Environment gerado: apiUrl=${apiUrl}`);
 }
 
 main();
