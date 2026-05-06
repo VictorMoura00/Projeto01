@@ -20,9 +20,6 @@
 # Docker env overrides
 .env.docker
 
-# Root package-lock (managed in frontend/)
-/package-lock.json
-
 # ─────────────────────────────────────────────────────────────────────────────
 # .NET / ASP.NET CORE
 # ─────────────────────────────────────────────────────────────────────────────

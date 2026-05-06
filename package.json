@@ -1,0 +1,21 @@
+{
+  "name": "admincore",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AdminCore — API .NET 10 + Angular 21",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "dev": "npm run setup && concurrently -k -n API,FRONT -c blue,green \"npm run dev:api\" \"npm run dev:front\"",
+    "dev:api": "dotnet run --project backend/src/AdminCore.API --launch-profile http",
+    "dev:front": "cd frontend && ng serve --port 4300",
+    "infra:up": "docker compose -f docker-compose.dev.yml up -d --wait",
+    "infra:down": "docker compose -f docker-compose.dev.yml down",
+    "migrate": "node scripts/migrate.js",
+    "build": "npm run build:api && npm run build:front",
+    "build:api": "dotnet build backend/AdminCore.slnx",
+    "build:front": "cd frontend && ng build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
