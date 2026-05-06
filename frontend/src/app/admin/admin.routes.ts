@@ -12,6 +12,10 @@ export const adminRoutes: Routes = [
         loadComponent: () => import('./configurator-overview.component').then(m => m.ConfiguratorOverviewComponent)
       },
       {
+        path: 'forms',
+        loadChildren: () => import('./forms/forms.routes').then(m => m.formsRoutes)
+      },
+      {
         path: 'entities',
         loadChildren: () => import('./entities/entities.routes').then(m => m.entitiesRoutes)
       },

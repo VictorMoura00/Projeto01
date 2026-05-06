@@ -393,6 +393,7 @@ export class AdminLayoutComponent {
       items: [
         { label: 'Painel do módulo', route: 'overview', icon: 'pi pi-th-large' },
         { label: 'Entidades', route: 'entities', icon: 'pi pi-database' },
+        { label: 'Formulários', route: 'forms', icon: 'pi pi-file-edit' },
         { label: 'Módulos e menus', route: 'modules', icon: 'pi pi-sitemap', state: 'soon' },
         { label: 'Workflows', route: 'workflows', icon: 'pi pi-share-alt', state: 'soon' },
       ],
