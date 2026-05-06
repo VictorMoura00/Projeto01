@@ -1,32 +1,152 @@
-# .NET
+# ============================================================================
+# AdminCore — Global .gitignore
+# ============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECRETS & ENVIRONMENT VARIABLES
+# ─────────────────────────────────────────────────────────────────────────────
+
+# .NET secrets (UserSecrets, local config)
+**/appsettings.Production.json
+**/appsettings.*.local.json
+**/secrets.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Docker env overrides
+.env.docker
+
+# ─────────────────────────────────────────────────────────────────────────────
+# .NET / ASP.NET CORE
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Build outputs
 **/bin/
 **/obj/
+**/publish/
+**/artifacts/
+**/out/
+
+# NuGet
+**/packages/
+*.nupkg
+*.snupkg
+
+# Visual Studio
 **/.vs/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-.DS_Store
+*.vsconfig
 
-# .NET secrets
-**/appsettings.*.local.json
-**/secrets.json
-
-# Node / Angular
-**/node_modules/
-**/dist/
-**/.angular/
-*.log
-
-# Docker volumes
-**/postgres_data/
-
-# IDE
+# Rider / ReSharper / NCrunch / dotCover
 .idea/
+_ReSharper*/
+*.ncrunchsolution
+*.ncrunchproject
+*.dotCover
+*.sln.iml
+
+# Test & Coverage
+**/TestResults/
+**/coverage/
+*.trx
+*.opencover.xml
+*.cobertura.xml
+coverage.*.json
+coverage.*.xml
+coverage.*.info
+
+# Entity Framework Power Tools
+efpt.*.json
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NODE / ANGULAR
+# ─────────────────────────────────────────────────────────────────────────────
+
+node_modules/
+dist/
+.angular/
+.parcel-cache/
+.eslintcache
+.sass-cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DOCKER
+# ─────────────────────────────────────────────────────────────────────────────
+
+**/postgres_data/
+**/docker-volumes/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IDE & EDITORS
+# ─────────────────────────────────────────────────────────────────────────────
+
+# VS Code
 .vscode/
 !.vscode/settings.json
 !.vscode/mcp.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 
-# Agent configs
+# Vim / Emacs / etc
+*~
+*.swp
+*.swo
+*.tmp
+*.temp
+#*#
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AI AGENTS & AUTOMATION
+# ─────────────────────────────────────────────────────────────────────────────
+
 .codex/
 .opencode/
+.claude/
+.cursor/
+ai-context/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MISCELLANEOUS
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Local scratch files
+scratch/
+temp/
+tmp/
+notes.local.md
+TODO.local.md

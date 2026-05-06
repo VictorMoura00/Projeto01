@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "env": "node setup-env.js",
+    "start": "npm run env && ng serve",
+    "build": "npm run env && ng build",
+    "watch": "npm run env && ng build --watch --configuration development",
     "test": "ng test"
   },
   "private": true,

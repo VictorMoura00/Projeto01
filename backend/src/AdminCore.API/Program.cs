@@ -1,5 +1,17 @@
 using AdminCore.API.Extensions;
 
+// Load .env file before building the app so environment variables
+// are available to configuration providers.
+DotEnvExtensions.Load();
+
+// If DATABASE_URL is provided via .env, inject it as the default connection string
+// so all modules pick it up automatically.
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrWhiteSpace(databaseUrl))
+{
+    Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", databaseUrl);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();

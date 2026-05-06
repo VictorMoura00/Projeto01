@@ -6,6 +6,10 @@
 MAKEFLAGS += --no-print-directory
 SHELL     := /bin/bash
 
+# Load .env if present (silently ignore if missing)
+-include .env
+export
+
 ROOT_DIR  := $(shell pwd)
 BACK_DIR  := $(ROOT_DIR)/backend
 FRONT_DIR := $(ROOT_DIR)/frontend
