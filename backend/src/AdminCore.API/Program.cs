@@ -22,6 +22,7 @@ app.UseCorsPolicy();
 app.UseAuthentication();
 app.UseCurrentTenant();
 app.UseAuthorization();
+app.UseDevelopmentSeed();
 app.MapControllers();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
