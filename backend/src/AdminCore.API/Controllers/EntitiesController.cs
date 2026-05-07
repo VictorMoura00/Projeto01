@@ -65,4 +65,12 @@ public class EntitiesController(IMessageBus bus, ICurrentTenant currentTenant) :
         await bus.InvokeAsync(new ReorderFieldsCommand(TenantId, id, orderedFieldIds));
         return NoContent();
     }
+
+    [HttpGet("{id:guid}/export")]
+    public Task<object> Export(Guid id) =>
+        bus.InvokeAsync<object>(new ExportEntityCommand(TenantId, id));
+
+    [HttpPost("import")]
+    public Task<object> Import([FromBody] EntityExportDto data) =>
+        bus.InvokeAsync<object>(new ImportEntityCommand(TenantId, data));
 }

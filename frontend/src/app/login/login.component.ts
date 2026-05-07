@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -200,9 +201,17 @@ export class LoginComponent {
     this.loading.set(true);
     this.auth.login(this.form.getRawValue(), this.tenantSlug).subscribe({
       next: () => this.router.navigate(['/admin']),
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Login recusado', detail: 'Confira e-mail e senha.' });
+        let detail: string;
+        if (err.status === 0) {
+          detail = 'Não foi possível conectar ao servidor.';
+        } else if (err.status === 429) {
+          detail = 'Muitas tentativas. Aguarde um momento.';
+        } else {
+          detail = err.error?.message || 'Confira e-mail e senha.';
+        }
+        this.messageService.add({ severity: 'error', summary: 'Login recusado', detail });
       }
     });
   }

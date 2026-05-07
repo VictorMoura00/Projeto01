@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
@@ -9,6 +9,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DataTableComponent } from '../../shared/table/data-table.component';
+import { TableColumn } from '../../shared/table/column.model';
 import { EntitiesService } from './entities.service';
 import { EntityDefinition } from './entity.model';
 import { EntityFormComponent } from './entity-form.component';
@@ -16,8 +18,9 @@ import { EntityFormComponent } from './entity-form.component';
 @Component({
   selector: 'app-entities-list',
   imports: [
-    FormsModule, TableModule, ButtonModule, InputTextModule,
-    TagModule, ConfirmDialogModule, DialogModule, TooltipModule, EntityFormComponent
+    FormsModule, ButtonModule, InputTextModule, TagModule,
+    ConfirmDialogModule, DialogModule, TooltipModule,
+    DataTableComponent, EntityFormComponent
   ],
   providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,14 +32,16 @@ import { EntityFormComponent } from './entity-form.component';
         <div>
           <span class="page-kicker">Modelo de dados</span>
           <h1 class="page-title">Entidades</h1>
-          <p class="page-description">Defina os objetos centrais do sistema, seus slugs e a quantidade de campos configurados.</p>
+          <p class="page-description">Defina os objetos centrais do sistema. Exporte e importe estruturas como JSON.</p>
         </div>
         <div class="page-actions">
+          <p-button label="Importar JSON" icon="pi pi-upload" severity="secondary" [text]="true" (onClick)="fileInput.click()" />
+          <input #fileInput type="file" accept=".json" hidden (change)="onFileSelected($event)" />
           <p-button label="Nova entidade" icon="pi pi-plus" (onClick)="openCreate()" />
         </div>
       </div>
 
-      <div class="metric-strip" aria-label="Resumo de entidades">
+      <div class="metric-strip">
         <div class="metric-card">
           <span class="metric-label">Total</span>
           <strong class="metric-value">{{ totalCount() }}</strong>
@@ -51,122 +56,35 @@ import { EntityFormComponent } from './entity-form.component';
         </div>
       </div>
 
-      <div class="table-shell">
-        <div class="table-toolbar">
-          <div>
-            <strong class="toolbar-title">Catálogo de entidades</strong>
-            <p class="toolbar-meta">Linhas paginadas com ações rápidas de campos, edição e exclusão.</p>
-          </div>
-          <label class="search-control">
-            <span class="pi pi-search" aria-hidden="true"></span>
-            <input pInputText [(ngModel)]="search" placeholder="Buscar por nome ou slug" aria-label="Buscar entidades" (input)="onSearch()" />
-          </label>
-        </div>
+      <app-data-table
+        title="Catálogo de entidades"
+        subtitle="Linhas paginadas. Arraste colunas para reordenar. Exporte estruturas como JSON."
+        [columns]="columns"
+        [data]="entities()"
+        [loading]="loading()"
+        [totalRecords]="totalCount()"
+        [lazy]="true"
+        [globalSearch]="true"
+        [exportable]="true"
+        [columnToggle]="true"
+        [actionsTemplate]="actionsTpl"
+        (onPage)="onPage($event)"
+        (onSearch)="onSearch()"
+      />
 
-        <p-table
-          [value]="entities()"
-          [loading]="loading()"
-          [paginator]="true"
-          [rows]="20"
-          [totalRecords]="totalCount()"
-          [lazy]="true"
-          [rowsPerPageOptions]="[10, 20, 50]"
-          (onLazyLoad)="onPage($event)"
-          rowHover
-          styleClass="p-datatable-sm"
-          [tableStyle]="{'min-width': '56rem'}"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Nome</th>
-              <th>Slug</th>
-              <th>Campos</th>
-              <th>Status</th>
-              <th class="actions-col">Ações</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-entity>
-            <tr>
-              <td>
-                <span class="entity-name">
-                  <span class="entity-mark"><i class="pi pi-database" aria-hidden="true"></i></span>
-                  <span>
-                    <strong>{{ entity.name }}</strong>
-                    @if (entity.description) {
-                      <small>{{ entity.description }}</small>
-                    }
-                  </span>
-                </span>
-              </td>
-              <td><code>{{ entity.slug }}</code></td>
-              <td><span class="field-count">{{ entity.fieldCount }}</span></td>
-              <td>
-                <p-tag [value]="entity.isActive ? 'Ativo' : 'Inativo'"
-                       [severity]="entity.isActive ? 'success' : 'secondary'" />
-              </td>
-              <td>
-                <div class="row-actions">
-                  <p-button icon="pi pi-pencil" size="small" [text]="true" ariaLabel="Editar entidade" pTooltip="Editar" (onClick)="openEdit(entity)" />
-                  <p-button icon="pi pi-table" size="small" [text]="true" ariaLabel="Gerenciar campos" pTooltip="Gerenciar campos" (onClick)="openFields(entity)" />
-                  <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" ariaLabel="Excluir entidade" pTooltip="Excluir" (onClick)="confirmDelete(entity)" />
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="5">
-                <div class="empty-state">
-                  <strong>Nenhuma entidade encontrada</strong>
-                  Ajuste a busca ou crie uma nova entidade para começar.
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
+      <ng-template #actionsTpl let-entity>
+        <p-button icon="pi pi-download" size="small" [text]="true" severity="help" ariaLabel="Exportar JSON" pTooltip="Exportar JSON" (onClick)="exportEntity(entity)" />
+        <p-button icon="pi pi-pencil" size="small" [text]="true" ariaLabel="Editar entidade" pTooltip="Editar" (onClick)="openEdit(entity)" />
+        <p-button icon="pi pi-table" size="small" [text]="true" ariaLabel="Gerenciar campos" pTooltip="Gerenciar campos" (onClick)="openFields(entity)" />
+        <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" ariaLabel="Excluir entidade" pTooltip="Excluir" (onClick)="confirmDelete(entity)" />
+      </ng-template>
     </section>
 
     <p-dialog [(visible)]="showForm" [header]="editingEntity() ? 'Editar Entidade' : 'Nova Entidade'"
               [modal]="true" [style]="{width: '32rem'}" [breakpoints]="{'640px': '94vw'}">
-      <app-entity-form
-        [entity]="editingEntity()"
-        (saved)="onSaved()"
-        (cancelled)="showForm = false"
-      />
+      <app-entity-form [entity]="editingEntity()" (saved)="onSaved()" (cancelled)="showForm = false" />
     </p-dialog>
-  `,
-  styles: [`
-    .entity-name {
-      align-items: center;
-      display: flex;
-    }
-
-    .entity-name strong,
-    .entity-name small {
-      display: block;
-    }
-
-    .entity-name small {
-      color: var(--app-muted);
-      font-size: 0.8125rem;
-      margin-top: 0.15rem;
-      max-width: 34rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .field-count {
-      color: var(--app-text);
-      font-weight: 700;
-    }
-
-    .actions-col {
-      text-align: right;
-      width: 9rem;
-    }
-  `]
+  `
 })
 export class EntitiesListComponent implements OnInit {
   private svc = inject(EntitiesService);
@@ -177,19 +95,25 @@ export class EntitiesListComponent implements OnInit {
   entities = signal<EntityDefinition[]>([]);
   loading = signal(false);
   totalCount = signal(0);
-  activeCount = computed(() => this.entities().filter(entity => entity.isActive).length);
-  fieldTotal = computed(() => this.entities().reduce((total, entity) => total + entity.fieldCount, 0));
-  search = '';
+  activeCount = computed(() => this.entities().filter(e => e.isActive).length);
+  fieldTotal = computed(() => this.entities().reduce((t, e) => t + e.fieldCount, 0));
   showForm = false;
   editingEntity = signal<EntityDefinition | null>(null);
   private currentPage = 1;
+
+  columns: TableColumn[] = [
+    { field: 'name', header: 'Nome', sortable: true },
+    { field: 'slug', header: 'Slug', type: 'code', sortable: true },
+    { field: 'fieldCount', header: 'Campos', type: 'number' },
+    { field: 'isActive', header: 'Status', type: 'tag' }
+  ];
 
   ngOnInit() { this.load(); }
 
   load(page = 1) {
     this.loading.set(true);
     this.currentPage = page;
-    this.svc.getAll(page, 20, this.search || undefined).subscribe({
+    this.svc.getAll(page, 20).subscribe({
       next: res => { this.entities.set(res.items); this.totalCount.set(res.totalCount); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
@@ -202,22 +126,56 @@ export class EntitiesListComponent implements OnInit {
     this.load(Math.floor(first / rows) + 1);
   }
 
+  exportEntity(entity: EntityDefinition) {
+    this.svc.export(entity.id).subscribe({
+      next: (data) => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${entity.slug}.json`;
+        a.click(); URL.revokeObjectURL(url);
+        this.msg.add({ severity: 'success', summary: 'Exportado', detail: `${entity.name} salvo como ${entity.slug}.json` });
+      },
+      error: () => this.msg.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao exportar entidade.' })
+    });
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        this.svc.import(data).subscribe({
+          next: (result) => {
+            this.msg.add({ severity: 'success', summary: 'Importado', detail: `Entidade "${result.name}" criada.` });
+            this.load(this.currentPage);
+          },
+          error: (err) => this.msg.add({ severity: 'error', summary: 'Erro', detail: err.error?.message || 'Falha ao importar.' })
+        });
+      } catch {
+        this.msg.add({ severity: 'error', summary: 'JSON inválido', detail: 'O arquivo não é um JSON válido.' });
+      }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
   openCreate() { this.editingEntity.set(null); this.showForm = true; }
   openEdit(entity: EntityDefinition) { this.editingEntity.set(entity); this.showForm = true; }
   openFields(entity: EntityDefinition) { this.router.navigate(['/admin/entities', entity.id]); }
-
   onSaved() { this.showForm = false; this.load(this.currentPage); }
 
   confirmDelete(entity: EntityDefinition) {
     this.confirm.confirm({
-      message: `Deseja excluir a entidade "${entity.name}"? Esta ação não pode ser desfeita.`,
-      header: 'Confirmar exclusão',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Excluir',
-      rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
+      message: `Deseja excluir a entidade "${entity.name}"?`,
+      header: 'Confirmar exclusão', icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Excluir', rejectLabel: 'Cancelar', acceptButtonStyleClass: 'p-button-danger',
       accept: () => this.svc.delete(entity.id).subscribe({
-        next: () => { this.msg.add({ severity: 'success', summary: 'Excluído', detail: `Entidade "${entity.name}" removida.` }); this.load(this.currentPage); },
+        next: () => { this.msg.add({ severity: 'success', summary: 'Excluído', detail: `Entidade "${entity.name}" removida.` }); this.load(this.currentPage); }
       })
     });
   }

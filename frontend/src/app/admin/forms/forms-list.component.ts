@@ -10,6 +10,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { FormsService } from './forms.service';
 import { FormDefinition, FIELD_TYPE_LABELS, CreateFormPayload, UpdateFormPayload, DuplicatePayload } from './form.model';
@@ -19,7 +20,7 @@ import { FormDefinition, FIELD_TYPE_LABELS, CreateFormPayload, UpdateFormPayload
   imports: [
     FormsModule, ReactiveFormsModule, TableModule, ButtonModule, InputTextModule,
     TagModule, ConfirmDialogModule, DialogModule, TooltipModule, ToggleSwitchModule,
-    RouterLink, RouterLinkActive
+    MultiSelectModule, RouterLink, RouterLinkActive
   ],
   providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +35,8 @@ import { FormDefinition, FIELD_TYPE_LABELS, CreateFormPayload, UpdateFormPayload
           <p class="page-description">Crie, edite e publique formulários configuráveis com campos dinâmicos.</p>
         </div>
         <div class="page-actions">
+          <p-button label="Importar JSON" icon="pi pi-upload" severity="secondary" [text]="true" (onClick)="fileInput.click()" />
+          <input #fileInput type="file" accept=".json" hidden (change)="onFileSelected($event)" />
           <p-button label="Novo formulário" icon="pi pi-plus" (onClick)="openCreate()" />
         </div>
       </div>
@@ -57,12 +60,20 @@ import { FormDefinition, FIELD_TYPE_LABELS, CreateFormPayload, UpdateFormPayload
         <div class="table-toolbar">
           <div>
             <strong class="toolbar-title">Catálogo de formulários</strong>
-            <p class="toolbar-meta">Linhas paginadas com ações rápidas de edição, publicação e exclusão.</p>
+            <p class="toolbar-meta">Linhas paginadas. Arraste colunas para reordenar.</p>
           </div>
-          <label class="search-control">
-            <span class="pi pi-search" aria-hidden="true"></span>
-            <input pInputText [(ngModel)]="search" placeholder="Buscar por nome ou slug" aria-label="Buscar formulários" (input)="onSearch()" />
-          </label>
+          <div class="toolbar-right">
+            <p-multiSelect
+              [options]="columnOptions"
+              [(ngModel)]="visibleColumns"
+              placeholder="Colunas"
+              styleClass="column-select"
+            />
+            <label class="search-control">
+              <span class="pi pi-search" aria-hidden="true"></span>
+              <input pInputText [(ngModel)]="search" placeholder="Buscar por nome ou slug" aria-label="Buscar formulários" (input)="onSearch()" />
+            </label>
+          </div>
         </div>
 
         <p-table
@@ -73,6 +84,8 @@ import { FormDefinition, FIELD_TYPE_LABELS, CreateFormPayload, UpdateFormPayload
           [totalRecords]="totalCount()"
           [lazy]="true"
           [rowsPerPageOptions]="[10, 20, 50]"
+          [reorderableColumns]="true"
+          [resizableColumns]="true"
           (onLazyLoad)="onPage($event)"
           rowHover
           styleClass="p-datatable-sm"
@@ -80,43 +93,42 @@ import { FormDefinition, FIELD_TYPE_LABELS, CreateFormPayload, UpdateFormPayload
         >
           <ng-template pTemplate="header">
             <tr>
-              <th>Nome</th>
-              <th>Slug</th>
-              <th>Versão</th>
-              <th>Campos</th>
-              <th>Status</th>
+              @if (colVisible('name')) { <th pResizableColumn>Nome</th> }
+              @if (colVisible('slug')) { <th>Slug</th> }
+              @if (colVisible('version')) { <th>Versão</th> }
+              @if (colVisible('fields')) { <th>Campos</th> }
+              @if (colVisible('status')) { <th>Status</th> }
               <th class="actions-col">Ações</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-form>
             <tr>
+              @if (colVisible('name')) {
               <td>
                 <a class="form-name" [routerLink]="['/admin/forms', form.id]" routerLinkActive="active">
                   <span class="form-mark"><i class="pi pi-file-edit" aria-hidden="true"></i></span>
                   <span>
                     <strong>{{ form.name }}</strong>
-                    @if (form.description) {
-                      <small>{{ form.description }}</small>
-                    }
+                    @if (form.description) { <small>{{ form.description }}</small> }
                   </span>
                 </a>
               </td>
-              <td><code class="slug-code">{{ form.slug }}</code></td>
-              <td><span class="version-badge">v{{ form.version }}</span></td>
-              <td><span class="field-count">{{ form.fields.length }}</span></td>
+              }
+              @if (colVisible('slug')) { <td><code class="slug-code">{{ form.slug }}</code></td> }
+              @if (colVisible('version')) { <td><span class="version-badge">v{{ form.version }}</span></td> }
+              @if (colVisible('fields')) { <td><span class="field-count">{{ form.fields.length }}</span></td> }
+              @if (colVisible('status')) {
               <td>
                 <div class="status-tags">
-                  @if (form.isPublished) {
-                    <p-tag value="Publicado" severity="success" />
-                  } @else {
-                    <p-tag value="Rascunho" severity="warn" />
-                  }
-                  <p-tag [value]="form.isActive ? 'Ativo' : 'Inativo'"
-                         [severity]="form.isActive ? 'info' : 'secondary'" />
+                  @if (form.isPublished) { <p-tag value="Publicado" severity="success" /> }
+                  @else { <p-tag value="Rascunho" severity="warn" /> }
+                  <p-tag [value]="form.isActive ? 'Ativo' : 'Inativo'" [severity]="form.isActive ? 'info' : 'secondary'" />
                 </div>
               </td>
+              }
               <td>
                 <div class="row-actions">
+                  <p-button icon="pi pi-download" size="small" [text]="true" severity="help" ariaLabel="Exportar JSON" pTooltip="Exportar JSON" (onClick)="exportForm(form)" />
                   <p-button icon="pi pi-pencil" size="small" [text]="true" ariaLabel="Editar formulário" pTooltip="Editar" (onClick)="openEdit(form)" />
                   @if (!form.isPublished) {
                     <p-button icon="pi pi-send" size="small" [text]="true" severity="success" ariaLabel="Publicar formulário" pTooltip="Publicar" (onClick)="confirmPublish(form)" />
@@ -275,6 +287,15 @@ export class FormsListComponent implements OnInit {
   publishedCount = computed(() => this.entities().filter(f => f.isPublished).length);
   fieldTotal = computed(() => this.entities().reduce((total, f) => total + f.fields.length, 0));
 
+  columnOptions = [
+    { label: 'Nome', value: 'name' },
+    { label: 'Slug', value: 'slug' },
+    { label: 'Versão', value: 'version' },
+    { label: 'Campos', value: 'fields' },
+    { label: 'Status', value: 'status' }
+  ];
+  visibleColumns: string[] = ['name', 'slug', 'version', 'fields', 'status'];
+
   search = '';
   showForm = false;
   saving = false;
@@ -300,6 +321,45 @@ export class FormsListComponent implements OnInit {
   });
 
   ngOnInit() { this.load(); }
+
+  colVisible(field: string) { return this.visibleColumns.includes(field); }
+
+  exportForm(form: FormDefinition) {
+    this.svc.export(form.id).subscribe({
+      next: (data) => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${form.slug}.json`;
+        a.click(); URL.revokeObjectURL(url);
+        this.msg.add({ severity: 'success', summary: 'Exportado', detail: `${form.name}.json` });
+      },
+      error: () => this.msg.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao exportar.' })
+    });
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        this.svc.import(data).subscribe({
+          next: (result) => {
+            this.msg.add({ severity: 'success', summary: 'Importado', detail: `Formulário "${result.name}" criado.` });
+            this.load(this.currentPage);
+          },
+          error: (err) => this.msg.add({ severity: 'error', summary: 'Erro', detail: err.error?.message || 'Falha ao importar.' })
+        });
+      } catch {
+        this.msg.add({ severity: 'error', summary: 'JSON inválido' });
+      }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
 
   load(page = 1) {
     this.loading.set(true);

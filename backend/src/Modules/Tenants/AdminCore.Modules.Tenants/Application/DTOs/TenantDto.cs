@@ -7,6 +7,8 @@ public record TenantDto(
     string? LogoUrl,
     string? FaviconUrl,
     bool IsActive,
+    string? ConnectionString,
+    string? DatabaseProvider,
     TenantThemeDto Theme,
     DateTime CreatedAt
 );

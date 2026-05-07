@@ -24,6 +24,7 @@ public class CreateTenantHandler(TenantsDbContext db)
 
     internal static TenantDto ToDto(Tenant t) =>
         new(t.Id, t.Slug, t.Name, t.LogoUrl, t.FaviconUrl, t.IsActive,
+            t.ConnectionString, t.DatabaseProvider,
             new TenantThemeDto(t.Theme.PrimaryColor, t.Theme.SecondaryColor,
                 t.Theme.AccentColor, t.Theme.SurfaceColor, t.Theme.FontFamily),
             t.CreatedAt);

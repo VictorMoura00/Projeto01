@@ -23,7 +23,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             };
 
             context.Response.StatusCode = status;
-            await context.Response.WriteAsJsonAsync(new { message });
+            var response = ex is ValidationException vex
+                ? new { message = "Validation failed.", errors = vex.Errors }
+                : (object)new { message };
+            await context.Response.WriteAsJsonAsync(response);
         }
     }
 }

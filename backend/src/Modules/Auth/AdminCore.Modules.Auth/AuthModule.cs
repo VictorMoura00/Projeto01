@@ -13,7 +13,14 @@ public class AuthModule : IModule
     public IServiceCollection RegisterModule(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<AuthDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        {
+            var provider = configuration["Database:Provider"] ?? "postgres";
+            var conn = configuration.GetConnectionString("DefaultConnection");
+            if (provider == "sqlite")
+                options.UseSqlite(conn);
+            else
+                options.UseNpgsql(conn);
+        });
 
         services.AddIdentityCore<AppUser>()
             .AddRoles<AppRole>()

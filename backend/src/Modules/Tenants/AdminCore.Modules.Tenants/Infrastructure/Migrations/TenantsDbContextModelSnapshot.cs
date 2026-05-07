@@ -29,10 +29,16 @@ namespace AdminCore.Modules.Tenants.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ConnectionString")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DatabaseProvider")
                         .HasColumnType("text");
 
                     b.Property<string>("FaviconUrl")

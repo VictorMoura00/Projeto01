@@ -5,6 +5,12 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const FRONT_DIR = path.join(ROOT, 'frontend');
 
+// Garante que as ferramentas .NET estejam no PATH (necessário no Linux)
+const DOTNET_TOOLS = path.join(require('os').homedir(), '.dotnet', 'tools');
+if (fs.existsSync(DOTNET_TOOLS)) {
+  process.env.PATH = `${DOTNET_TOOLS}${path.delimiter}${process.env.PATH}`;
+}
+
 function run(cmd, opts = {}) {
   console.log(`▶  ${cmd}`);
   execSync(cmd, { stdio: 'inherit', cwd: ROOT, ...opts });

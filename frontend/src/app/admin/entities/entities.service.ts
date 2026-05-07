@@ -54,4 +54,12 @@ export class EntitiesService {
   reorderFields(entityId: string, orderedFieldIds: string[]): Observable<void> {
     return this.api.put<void>(`/admin/entities/${entityId}/fields/reorder`, orderedFieldIds);
   }
+
+  export(id: string): Observable<any> {
+    return this.api.get<any>(`/admin/entities/${id}/export`);
+  }
+
+  import(data: any): Observable<EntityDefinition> {
+    return this.api.post<EntityDefinition>('/admin/entities/import', data);
+  }
 }

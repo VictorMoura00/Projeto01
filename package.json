@@ -11,6 +11,7 @@
     "infra:up": "docker compose -f docker-compose.dev.yml up -d --wait",
     "infra:down": "docker compose -f docker-compose.dev.yml down",
     "migrate": "node scripts/migrate.js",
+    "kill-ports": "node scripts/kill-ports.js",
     "build": "npm run build:api && npm run build:front",
     "build:api": "dotnet build backend/AdminCore.slnx",
     "build:front": "cd frontend && ng build"

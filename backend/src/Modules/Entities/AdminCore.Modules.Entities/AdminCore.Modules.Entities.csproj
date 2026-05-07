@@ -1,12 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\AdminCore.Shared.Kernel\AdminCore.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\FormBuilder\AdminCore.Modules.FormBuilder\AdminCore.Modules.FormBuilder.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="*" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="*" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="*" />
   </ItemGroup>
 

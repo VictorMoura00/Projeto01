@@ -1,4 +1,5 @@
 using AdminCore.API.Extensions;
+using System.Reflection;
 
 // Load .env file before building the app so environment variables
 // are available to configuration providers.
@@ -18,6 +19,7 @@ MapEnvToDotNet("JWT_ISSUER", "Jwt__Issuer");
 MapEnvToDotNet("JWT_AUDIENCE", "Jwt__Audience");
 MapEnvToDotNet("JWT_ACCESS_TOKEN_EXPIRATION_MINUTES", "Jwt__AccessTokenExpirationMinutes");
 MapEnvToDotNet("JWT_REFRESH_TOKEN_EXPIRATION_DAYS", "Jwt__RefreshTokenExpirationDays");
+MapEnvToDotNet("DB_PROVIDER", "Database__Provider");
 
 var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS");
 if (!string.IsNullOrWhiteSpace(corsOrigins))
@@ -53,7 +55,12 @@ builder.Services.AddCorsPolicy(builder.Configuration);
 builder.Services.AddModules(builder.Configuration);
 builder.Services.AddApiAuthentication(builder.Configuration);
 
-builder.Host.AddWolverineModules();
+// Wolverine só é necessário em runtime. Pular durante migrations (dotnet ef)
+// evita o spam de assembly scanning que cospe ~15 linhas por assembly de tooling.
+var isDesignTime = Assembly.GetEntryAssembly()?.GetName().Name is "ef" or "dotnet-ef"
+    || Environment.GetEnvironmentVariable("SKIP_WOLVERINE") == "1";
+if (!isDesignTime)
+    builder.Host.AddWolverineModules();
 
 var app = builder.Build();
 

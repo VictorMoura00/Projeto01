@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AdminCore.Modules.Tenants.Application.Commands;
 
-public record UpdateTenantCommand(Guid Id, string Name, string? LogoUrl, string? FaviconUrl, bool IsActive);
+public record UpdateTenantCommand(Guid Id, string Name, string? LogoUrl, string? FaviconUrl,
+    bool IsActive, string? ConnectionString, string? DatabaseProvider);
 
 public class UpdateTenantHandler(TenantsDbContext db)
 {
@@ -18,6 +19,8 @@ public class UpdateTenantHandler(TenantsDbContext db)
         tenant.LogoUrl = cmd.LogoUrl;
         tenant.FaviconUrl = cmd.FaviconUrl;
         tenant.IsActive = cmd.IsActive;
+        tenant.ConnectionString = cmd.ConnectionString;
+        tenant.DatabaseProvider = cmd.DatabaseProvider;
 
         await db.SaveChangesAsync(ct);
         return CreateTenantHandler.ToDto(tenant);

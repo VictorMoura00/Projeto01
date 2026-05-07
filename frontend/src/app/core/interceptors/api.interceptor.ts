@@ -1,11 +1,13 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
+import { MessageService } from 'primeng/api';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
+  const messageService = inject(MessageService);
   const accessToken = auth.accessToken();
   const isAbsolute = req.url.startsWith('http');
   const url = isAbsolute ? req.url : `${environment.apiUrl}${req.url}`;
@@ -27,7 +29,13 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           setHeaders: { Authorization: `Bearer ${result.accessToken}` }
         }))),
         catchError(refreshError => {
-          auth.logout();
+          auth.logout(false);
+          messageService.add({
+            severity: 'warn',
+            summary: 'Sessão expirada',
+            detail: 'Sua sessão expirou. Faça login novamente.',
+            life: 6000
+          });
           return throwError(() => refreshError);
         })
       );

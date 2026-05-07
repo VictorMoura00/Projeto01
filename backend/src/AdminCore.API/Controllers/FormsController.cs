@@ -27,8 +27,12 @@ public class FormsController(IMessageBus bus, ICurrentTenant currentTenant) : Co
         bus.InvokeAsync<object>(command with { TenantId = TenantId });
 
     [HttpPut("{id:guid}")]
-    public Task<object> Update(Guid id, [FromBody] UpdateFormDefinitionCommand command) =>
-        bus.InvokeAsync<object>(command with { TenantId = TenantId, FormId = id });
+    public Task<object> Update(Guid id, [FromBody] UpdateFormDefinitionCommand command)
+    {
+        command.TenantId = TenantId;
+        command.FormId = id;
+        return bus.InvokeAsync<object>(command);
+    }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
@@ -44,4 +48,12 @@ public class FormsController(IMessageBus bus, ICurrentTenant currentTenant) : Co
     [HttpPost("{id:guid}/duplicate")]
     public Task<object> Duplicate(Guid id, [FromBody] DuplicateFormDefinitionCommand command) =>
         bus.InvokeAsync<object>(command with { TenantId = TenantId, FormId = id });
+
+    [HttpGet("{id:guid}/export")]
+    public Task<object> Export(Guid id) =>
+        bus.InvokeAsync<object>(new ExportFormCommand(TenantId, id));
+
+    [HttpPost("import")]
+    public Task<object> Import([FromBody] FormExportDto data) =>
+        bus.InvokeAsync<object>(new ImportFormCommand(TenantId, data));
 }

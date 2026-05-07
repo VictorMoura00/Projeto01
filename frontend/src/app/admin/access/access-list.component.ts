@@ -7,6 +7,7 @@ import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AccessService } from './access.service';
 import { AppRole } from './access.model';
@@ -16,8 +17,8 @@ interface PermissionRow { entitySlug: string; create: boolean; read: boolean; up
 @Component({
   selector: 'app-access-list',
   imports: [
-    ReactiveFormsModule, FormsModule, TableModule, ButtonModule, InputTextModule,
-    TagModule, DialogModule, ToggleSwitchModule, ConfirmDialogModule
+    FormsModule, ReactiveFormsModule, TableModule, ButtonModule, InputTextModule,
+    TagModule, DialogModule, ToggleSwitchModule, ConfirmDialogModule, MultiSelectModule
   ],
   providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,27 +56,33 @@ interface PermissionRow { entitySlug: string; create: boolean; read: boolean; up
         <div class="table-toolbar">
           <div>
             <strong class="toolbar-title">Roles cadastradas</strong>
-            <p class="toolbar-meta">Roles de sistema ficam protegidas contra edição e exclusão.</p>
+            <p class="toolbar-meta">Roles de sistema ficam protegidas. Arraste colunas para reordenar.</p>
           </div>
+          <p-multiSelect
+            [options]="columnOptions"
+            [(ngModel)]="visibleColumns"
+            placeholder="Colunas"
+            styleClass="column-select"
+          />
         </div>
 
-        <p-table [value]="roles()" [loading]="loading()" [tableStyle]="{'min-width':'50rem'}" rowHover styleClass="p-datatable-sm">
+        <p-table [value]="roles()" [loading]="loading()" [reorderableColumns]="true" [resizableColumns]="true"
+                 [tableStyle]="{'min-width':'50rem'}" rowHover styleClass="p-datatable-sm">
           <ng-template pTemplate="header">
             <tr>
-              <th>Nome</th>
-              <th>Descrição</th>
-              <th>Permissões</th>
-              <th>Status</th>
+              @if (colVisible('name')) { <th pResizableColumn>Nome</th> }
+              @if (colVisible('description')) { <th>Descrição</th> }
+              @if (colVisible('permissions')) { <th>Permissões</th> }
+              @if (colVisible('status')) { <th>Status</th> }
               <th class="actions-col">Ações</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-role>
             <tr>
-              <td><strong>{{ role.name }}</strong></td>
-              <td class="desc-cell">{{ role.description || 'Sem descrição' }}</td>
-              <td>
-                <span class="perm-count">{{ role.permissions.length }} entidade(s)</span>
-              </td>
+              @if (colVisible('name')) { <td><strong>{{ role.name }}</strong></td> }
+              @if (colVisible('description')) { <td class="desc-cell">{{ role.description || 'Sem descrição' }}</td> }
+              @if (colVisible('permissions')) { <td><span class="perm-count">{{ role.permissions.length }} entidade(s)</span></td> }
+              @if (colVisible('status')) {
               <td>
                 @if (role.isSystemRole) {
                   <p-tag value="Sistema" severity="info" />
@@ -85,6 +92,7 @@ interface PermissionRow { entitySlug: string; create: boolean; read: boolean; up
                   <p-tag value="Inativo" severity="secondary" />
                 }
               </td>
+              }
               <td>
                 <div class="row-actions">
                   <p-button icon="pi pi-shield" size="small" [text]="true" ariaLabel="Editar permissões" title="Permissões" (onClick)="openPermissions(role)" />
@@ -199,6 +207,14 @@ export class AccessListComponent implements OnInit {
   saving = signal(false);
   savingPerms = signal(false);
 
+  columnOptions = [
+    { label: 'Nome', value: 'name' },
+    { label: 'Descrição', value: 'description' },
+    { label: 'Permissões', value: 'permissions' },
+    { label: 'Status', value: 'status' }
+  ];
+  visibleColumns: string[] = ['name', 'description', 'permissions', 'status'];
+
   showRoleForm = false;
   editingRole = signal<AppRole | null>(null);
 
@@ -213,6 +229,8 @@ export class AccessListComponent implements OnInit {
   });
 
   ngOnInit() { this.load(); }
+
+  colVisible(field: string) { return this.visibleColumns.includes(field); }
 
   load() {
     this.loading.set(true);

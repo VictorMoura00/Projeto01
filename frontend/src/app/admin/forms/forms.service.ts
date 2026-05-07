@@ -34,4 +34,12 @@ export class FormsService {
   duplicate(id: string, data: DuplicatePayload): Observable<FormDefinition> {
     return this.api.post<FormDefinition>(`/admin/forms/${id}/duplicate`, data);
   }
+
+  export(id: string): Observable<any> {
+    return this.api.get<any>(`/admin/forms/${id}/export`);
+  }
+
+  import(data: any): Observable<FormDefinition> {
+    return this.api.post<FormDefinition>('/admin/forms/import', data);
+  }
 }

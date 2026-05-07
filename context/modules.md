@@ -11,12 +11,16 @@ Primitivos compartilhados. **Sem lógica de negócio.**
 
 ---
 
-## Auth Module (`src/Modules/Auth`) — **DEFERIDO**
-Domínio criado, migrations aplicadas, **handlers e endpoints NÃO implementados**.
+## Auth Module (`src/Modules/Auth`) — ✅ COMPLETO
+Autenticação e autorização via ASP.NET Identity + JWT + Refresh Tokens.
 - `AppUser` (IdentityUser<Guid>) — com TenantId, FirstName, LastName, IsActive
 - `AppRole` (IdentityRole<Guid>) — com TenantId, Description, IsSystemRole
 - `RefreshToken` — Token, ExpiresAt, IsRevoked, ReplacedByToken
-- `AuthDbContext` (schema `auth`)
+- `AuthDbContext` (schema `auth`) — Identity + RefreshTokens
+- **Application**: `LoginCommand`, `RegisterCommand`, `RefreshTokenCommand` com handlers Wolverine
+- **Infrastructure**: `JwtTokenService` (HMAC SHA256), `IJwtTokenService`
+- **Controller**: `AuthController` — `POST /auth/login` (AllowAnonymous), `POST /auth/refresh` (AllowAnonymous), `POST /auth/register` (Admin)
+- **Seed**: `DevelopmentSeedExtensions` cria tenant `admin` + admin@admincore.local / Admin123!
 
 ---
 
@@ -93,6 +97,6 @@ Host mínimo — apenas inicialização e roteamento.
 - `Program.cs` — só extension methods (regra obrigatória)
 - `Extensions/ModulesExtensions.cs` — instancia e chama `RegisterModule()` de cada módulo
 - `Extensions/WolverineExtensions.cs` — adiciona assemblies de todos os módulos ao scan
-- `Extensions/CorsExtensions.cs` — origin padrão `http://localhost:4200`
-- `DevTenantId` hardcoded em todos os controllers enquanto auth é deferido
+- `Extensions/CorsExtensions.cs` — origin padrão `http://localhost:4300`
+- Auth resolvida via claims JWT (middleware `UseCurrentTenant`, `UseAuthentication`, `UseAuthorization`)
 - porta: **5000** (launchSettings.json, perfil `http`)

@@ -48,26 +48,27 @@ public class GetEntityDefinitionsHandler(EntitiesDbContext db)
 ```csharp
 [ApiController]
 [Route("admin/entities")]
-public class EntitiesController(IMessageBus bus) : ControllerBase
+public class EntitiesController(IMessageBus bus, ICurrentTenant tenant) : ControllerBase
 {
-    private static readonly Guid DevTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-
     [HttpGet]
     public Task<object> GetAll([FromQuery] int page = 1) =>
-        bus.InvokeAsync<object>(new GetEntityDefinitionsQuery(DevTenantId, page));
+        bus.InvokeAsync<object>(new GetEntityDefinitionsQuery(tenant.Id, page));
 
     [HttpPost]
     public Task<object> Create([FromBody] CreateEntityDefinitionCommand cmd) =>
-        bus.InvokeAsync<object>(cmd with { TenantId = DevTenantId });
+        bus.InvokeAsync<object>(cmd with { TenantId = tenant.Id });
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await bus.InvokeAsync(new DeleteEntityDefinitionCommand(DevTenantId, id));
+        await bus.InvokeAsync(new DeleteEntityDefinitionCommand(tenant.Id, id));
         return NoContent();
     }
 }
 ```
+
+O tenant é resolvido automaticamente do JWT claim `tenant_id` via `ICurrentTenant` (injetado no construtor).
+Em Development, fallback para header `X-Tenant-Id` se o claim não existir.
 
 ### Exceções
 ```csharp

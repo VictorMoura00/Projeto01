@@ -6,14 +6,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AdminCore.Modules.FormBuilder.Application.Commands;
 
-public record UpdateFormDefinitionCommand(
-    Guid TenantId,
-    Guid FormId,
-    string Name,
-    string? Description,
-    bool IsActive,
-    IReadOnlyList<FormFieldInput> Fields
-);
+public class UpdateFormDefinitionCommand
+{
+    public Guid TenantId { get; set; }
+    public Guid FormId { get; set; }
+    public string Name { get; init; } = null!;
+    public string? Description { get; init; }
+    public bool IsActive { get; init; }
+    public IReadOnlyList<FormFieldInput> Fields { get; init; } = [];
+}
 
 public class UpdateFormDefinitionHandler(FormBuilderDbContext db)
 {

@@ -24,7 +24,7 @@ Plataforma white label low-code para gestão configurável de processos. O siste
 | Mensageria/Background | WolverineFx 5.x |
 | ORM | Entity Framework Core 10 + Npgsql |
 | Banco | PostgreSQL 17 (JSONB para dados dinâmicos) |
-| Auth | ASP.NET Identity + JWT + Refresh Tokens (**deferido**) |
+| Auth | ASP.NET Identity + JWT + Refresh Tokens |
 | Frontend | Angular 21 + TypeScript (standalone components) |
 | UI | PrimeNG 21+ tema Aura |
 | Testes | xUnit + NSubstitute + FluentAssertions |
@@ -48,7 +48,8 @@ backend/
 │       ├── Tenants/AdminCore.Modules.Tenants/
 │       ├── Entities/AdminCore.Modules.Entities/
 │       ├── Access/AdminCore.Modules.Access/
-│       └── Parameters/AdminCore.Modules.Parameters/
+│       ├── Parameters/AdminCore.Modules.Parameters/
+│       └── FormBuilder/AdminCore.Modules.FormBuilder/
 ├── tests/
 │   ├── AdminCore.Modules.Auth.Tests/
 │   ├── AdminCore.Modules.Entities.Tests/
@@ -67,7 +68,8 @@ frontend/
         ├── entities/
         ├── parameters/
         ├── access/
-        └── white-label/
+        ├── white-label/
+        └── forms/
 
 context/    ← este diretório — docs para agents
 docker-compose.dev.yml   ← só PostgreSQL, dev local
@@ -96,11 +98,14 @@ builder.Services.AddModules(builder.Configuration);
 builder.Host.AddWolverineModules();
 ```
 
-**Autenticação** — **deferida**. Todos os controllers usam `DevTenantId` hardcoded:
-```csharp
-private static readonly Guid DevTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-```
-Quando auth for implementado: JWT claim `tenant_id` → `ICurrentTenant`.
+## Autenticação — JWT + ASP.NET Identity + Refresh Tokens
+Auth implementada com Identity Core sobre PostgreSQL, JWT com claims (`sub`, `user_id`, `tenant_id`, `email`, `name`, `roles`) e refresh token rotation.
+- `POST /auth/login` → retorna `{ accessToken, refreshToken, expiresIn, user }`
+- `POST /auth/refresh` → rotaciona refresh token
+- `POST /auth/register` → restrito a Admin
+- `ICurrentTenant` e `ICurrentUser` são resolvidos das claims do JWT (middleware `UseCurrentTenant`).
+- Tenant é extraído do claim `tenant_id`; fallback `X-Tenant-Id` header em Development.
+- Seed automático em Development: `DevelopmentSeedExtensions` cria tenant `admin` + usuário `admin@admincore.local / Admin123!`.
 
 **Schemas PostgreSQL (isolamento por módulo)**
 | Schema | Módulo |
@@ -113,8 +118,9 @@ Quando auth for implementado: JWT claim `tenant_id` → `ICurrentTenant`.
 
 ## Dev Local
 ```bash
-make dev      # sobe PostgreSQL, aplica migrations, inicia API (5000) + frontend (4200)
-make migrate  # só migrations
-make up       # só PostgreSQL
-make down     # para containers
+npm run dev        # sobe API (5000) + frontend (4300) via concurrently
+npm run kill-ports # mata processos nas portas 5000 e 4300 (--db inclui 5432)
+npm run migrate    # aplica migrations pendentes
+make up            # só PostgreSQL (docker)
+make down          # para containers
 ```

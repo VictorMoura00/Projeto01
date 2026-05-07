@@ -133,9 +133,9 @@ As seguintes mudanças estavam no working tree antes da implementação do Codex
 
 3. ~~**Testes em stubs**~~ — ✅ 40 testes reais passando (Auth 5, Entities 18, Access 8, Parameters 9).
 
-4. **Frontend auth sem tratamento de 403** — O interceptor lida com 401 (refresh/logout), mas 403 (ForbiddenException) não mostra toast específico.
+4. ~~**Frontend auth sem tratamento de 403**~~ — ✅ Toast específico implementado no `error.interceptor.ts`.
 
-5. **Secrets JWT em `appsettings.json`** — A chave de assinatura JWT pode estar hardcoded em `appsettings.Development.json`. Revisar para uso de `UserSecrets` ou variáveis de ambiente.
+5. **CORS desalinhado com frontend** — `.env` define `CORS_ORIGINS` e `FRONTEND_PORT`. O `package.json` hardcoda `ng serve --port 4300`. Se não baterem, login falha silenciosamente no navegador (CORS bloqueia). Usar `npm run kill-ports` para liberar portas zumbis.
 
 ---
 
@@ -146,7 +146,8 @@ As seguintes mudanças estavam no working tree antes da implementação do Codex
 1. [x] **Commitar UI improvements** do working tree
 2. [x] **Criar migration do FormBuilder** e aplicar (`make migrate-add`)
 3. [x] **Implementar bootstrap de admin** (seed via `DevelopmentSeedExtensions`)
-4. [ ] **Revisar secrets JWT** — mover para `UserSecrets` ou env vars
+4. [ ] **Adicionar tratamento de 403 no frontend** — toast específico para ForbiddenException
+5. [ ] **Alinhar porta do frontend** — manter CORS_ORIGINS e FRONTEND_PORT em sync com `package.json` (porta 4300)
 
 ### Curto prazo (Wave A completa + Wave B frontend)
 
@@ -192,6 +193,7 @@ As seguintes mudanças estavam no working tree antes da implementação do Codex
 
 - **Sempre leia este arquivo antes de implementar** — ele é a fonte de verdade do estado atual.
 - **Nunca commitar junto com mudanças de UI existentes** — o working tree de frontend tem mudanças antigas que devem ser tratadas separadamente.
-- **FormBuilder precisa de migration antes de usar** — sem isso, o controller vai gerar exceção de tabela inexistente.
-- **Auth está funcional** — use `POST /auth/register` e `POST /auth/login` para obter tokens. O `DevTenantId` foi removido dos controllers principais.
+- **Auth está funcional** — use `POST /auth/login` com `admin@admincore.local / Admin123!`. O token JWT contém os claims `tenant_id`, `user_id`, `roles`.
+- **CORS: frontend porta 4300** — `package.json` hardcoda `--port 4300`. O `.env` deve ter `CORS_ORIGINS=http://localhost:4300` e `FRONTEND_PORT=4300`. Login falha silenciosamente se as portas não baterem.
+- **Use `npm run kill-ports`** para liberar portas zumbis (5000, 4300) antes de subir o dev.
 - **Testes de Auth são a referência** — `backend/tests/AdminCore.Modules.Auth.Tests/AuthHandlerTests.cs` tem o padrão correto (InMemory DbContext, NSubstitute para interfaces).

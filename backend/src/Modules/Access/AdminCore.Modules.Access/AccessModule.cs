@@ -11,7 +11,14 @@ public class AccessModule : IModule
     public IServiceCollection RegisterModule(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<AccessDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        {
+            var provider = configuration["Database:Provider"] ?? "postgres";
+            var conn = configuration.GetConnectionString("DefaultConnection");
+            if (provider == "sqlite")
+                options.UseSqlite(conn);
+            else
+                options.UseNpgsql(conn);
+        });
 
         return services;
     }

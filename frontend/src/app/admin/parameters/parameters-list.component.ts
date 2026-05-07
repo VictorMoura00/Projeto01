@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -7,6 +8,7 @@ import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ParametersService } from './parameters.service';
 import { SystemParameter, ParameterType, ParameterScope, PARAMETER_TYPE_LABELS } from './parameter.model';
@@ -14,8 +16,8 @@ import { SystemParameter, ParameterType, ParameterScope, PARAMETER_TYPE_LABELS }
 @Component({
   selector: 'app-parameters-list',
   imports: [
-    ReactiveFormsModule, TableModule, ButtonModule, InputTextModule,
-    SelectModule, TagModule, DialogModule, ConfirmDialogModule
+    FormsModule, ReactiveFormsModule, TableModule, ButtonModule, InputTextModule,
+    SelectModule, TagModule, DialogModule, ConfirmDialogModule, MultiSelectModule
   ],
   providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,35 +55,42 @@ import { SystemParameter, ParameterType, ParameterScope, PARAMETER_TYPE_LABELS }
         <div class="table-toolbar">
           <div>
             <strong class="toolbar-title">Parâmetros cadastrados</strong>
-            <p class="toolbar-meta">Agrupados por contexto para facilitar auditoria e manutenção.</p>
+            <p class="toolbar-meta">Agrupados por contexto. Arraste colunas para reordenar.</p>
           </div>
+          <p-multiSelect
+            [options]="columnOptions"
+            [(ngModel)]="visibleColumns"
+            placeholder="Colunas"
+            styleClass="column-select"
+          />
         </div>
 
         <p-table [value]="parameters()" [loading]="loading()" [rowGroupMode]="'subheader'"
                  groupRowsBy="group" [sortField]="'group'" [sortOrder]="1"
+                 [reorderableColumns]="true" [resizableColumns]="true"
                  [tableStyle]="{'min-width': '60rem'}" rowHover styleClass="p-datatable-sm">
           <ng-template pTemplate="header">
             <tr>
-              <th>Chave</th>
-              <th>Valor</th>
-              <th>Tipo</th>
-              <th>Descrição</th>
+              @if (colVisible('key')) { <th pResizableColumn>Chave</th> }
+              @if (colVisible('value')) { <th pResizableColumn>Valor</th> }
+              @if (colVisible('type')) { <th>TIpo</th> }
+              @if (colVisible('description')) { <th>Descrição</th> }
               <th class="actions-col">Ações</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="rowgroupheader" let-row>
             <tr>
-              <td colspan="5">
+              <td [attr.colspan]="visibleColumns.length + 1">
                 <span class="group-header">{{ row.group ?? 'Geral' }}</span>
               </td>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-param>
             <tr>
-              <td><code>{{ param.key }}</code></td>
-              <td class="value-cell">{{ param.value }}</td>
-              <td><p-tag [value]="typeLabel(param.type)" severity="info" /></td>
-              <td class="desc-cell">{{ param.description || 'Sem descrição' }}</td>
+              @if (colVisible('key')) { <td><code>{{ param.key }}</code></td> }
+              @if (colVisible('value')) { <td class="value-cell">{{ param.value }}</td> }
+              @if (colVisible('type')) { <td><p-tag [value]="typeLabel(param.type)" severity="info" /></td> }
+              @if (colVisible('description')) { <td class="desc-cell">{{ param.description || 'Sem descrição' }}</td> }
               <td>
                 <div class="row-actions">
                   <p-button icon="pi pi-pencil" size="small" [text]="true" ariaLabel="Editar parâmetro" [disabled]="param.isReadOnly" (onClick)="openEdit(param)" />
@@ -92,7 +101,7 @@ import { SystemParameter, ParameterType, ParameterScope, PARAMETER_TYPE_LABELS }
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="5">
+              <td [attr.colspan]="visibleColumns.length + 1">
                 <div class="empty-state">
                   <strong>Nenhum parâmetro cadastrado</strong>
                   Crie parâmetros para controlar comportamento por escopo.
@@ -139,14 +148,7 @@ import { SystemParameter, ParameterType, ParameterScope, PARAMETER_TYPE_LABELS }
         </div>
       </form>
     </p-dialog>
-  `,
-  styles: [`
-    .group-header { font-weight: 700; color: var(--p-primary-color); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .value-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .desc-cell { max-width: 240px; color: var(--p-text-muted-color); font-size: 0.875rem; }
-    .param-form { display: grid; gap: 1rem; }
-    .actions-col { text-align: right; width: 8rem; }
-  `]
+  `
 })
 export class ParametersListComponent implements OnInit {
   private svc = inject(ParametersService);
@@ -155,26 +157,32 @@ export class ParametersListComponent implements OnInit {
   private confirm = inject(ConfirmationService);
 
   parameters = signal<SystemParameter[]>([]);
-  groupCount = computed(() => new Set(this.parameters().map(parameter => parameter.group ?? 'Geral')).size);
-  readOnlyCount = computed(() => this.parameters().filter(parameter => parameter.isReadOnly).length);
+  groupCount = computed(() => new Set(this.parameters().map(p => p.group ?? 'Geral')).size);
+  readOnlyCount = computed(() => this.parameters().filter(p => p.isReadOnly).length);
   loading = signal(false);
   saving = signal(false);
   showForm = false;
   editing = signal<SystemParameter | null>(null);
 
+  columnOptions = [
+    { label: 'Chave', value: 'key' },
+    { label: 'Valor', value: 'value' },
+    { label: 'Tipo', value: 'type' },
+    { label: 'Descrição', value: 'description' }
+  ];
+  visibleColumns: string[] = ['key', 'value', 'type', 'description'];
+
   typeOptions = Object.entries(PARAMETER_TYPE_LABELS).map(([v, label]) => ({ value: Number(v), label }));
   scopeOptions = [{ value: 0, label: 'Global' }, { value: 1, label: 'Tenant' }];
 
   form = this.fb.group({
-    key: ['', Validators.required],
-    value: ['', Validators.required],
-    group: [''],
-    description: [''],
-    type: [ParameterType.String, Validators.required],
-    scope: [ParameterScope.Tenant, Validators.required],
+    key: ['', Validators.required], value: ['', Validators.required], group: [''],
+    description: [''], type: [ParameterType.String, Validators.required], scope: [ParameterScope.Tenant, Validators.required],
   });
 
   ngOnInit() { this.load(); }
+
+  colVisible(field: string) { return this.visibleColumns.includes(field); }
 
   load() {
     this.loading.set(true);
@@ -205,37 +213,19 @@ export class ParametersListComponent implements OnInit {
     this.saving.set(true);
     const val = this.form.getRawValue();
     const p = this.editing();
-
     const obs = p
       ? this.svc.update(p.id, val.value!, val.description ?? null)
-      : this.svc.create({
-          key: val.key!,
-          value: val.value!,
-          type: val.type!,
-          group: val.group || null,
-          description: val.description || null,
-          scope: val.scope!,
-          isReadOnly: false
-        });
-
+      : this.svc.create({ key: val.key!, value: val.value!, type: val.type!, group: val.group || null, description: val.description || null, scope: val.scope!, isReadOnly: false });
     obs.subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.showForm = false;
-        this.msg.add({ severity: 'success', summary: 'Parâmetro salvo!' });
-        this.load();
-      },
+      next: () => { this.saving.set(false); this.showForm = false; this.msg.add({ severity: 'success', summary: 'Parâmetro salvo!' }); this.load(); },
       error: () => this.saving.set(false)
     });
   }
 
   confirmDelete(p: SystemParameter) {
     this.confirm.confirm({
-      message: `Excluir o parâmetro "${p.key}"?`,
-      header: 'Confirmar',
-      acceptLabel: 'Excluir',
-      rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
+      message: `Excluir o parâmetro "${p.key}"?`, header: 'Confirmar',
+      acceptLabel: 'Excluir', rejectLabel: 'Cancelar', acceptButtonStyleClass: 'p-button-danger',
       accept: () => this.svc.delete(p.id).subscribe({
         next: () => { this.msg.add({ severity: 'success', summary: 'Parâmetro removido.' }); this.load(); }
       })

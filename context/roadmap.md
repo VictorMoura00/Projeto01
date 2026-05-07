@@ -28,10 +28,8 @@
 - Angular 21 standalone + PrimeNG Aura + lazy routing + interceptors (API + Error + Auth)
 
 ### ⏳ Pendente — Fase 1
-- [ ] **Bootstrap do primeiro admin** — seed ou endpoint para criar o primeiro usuário admin
-- [ ] **Migrations do FormBuilder** — DbContext existe mas não tem migration aplicada
-- [ ] **Testes unitários reais dos handlers** (Entities, Access, Parameters — Auth já tem)
-- [ ] **Revisão de secrets JWT** — mover chave de assinatura para UserSecrets/env vars
+- [ ] **Form Builder frontend** — listagem, editor, preview ao vivo
+- [ ] **Testes do FormBuilder** — nenhum projeto de teste criado ainda
 
 ---
 
@@ -42,7 +40,6 @@
 - [x] CI/CD — GitHub Actions para build + test backend e frontend
 
 ### ⏳ Pendente
-- [ ] **Migrations do FormBuilder** (aplicar ao banco)
 - [ ] **Form Builder frontend** — listagem, editor, preview ao vivo (ngx-formly ou custom)
 - [ ] **Endpoints `/config/entities` públicos** — API para apps de negócio consumirem configurações
 - [ ] Workflow Designer backend (`WorkflowDefinition`, `State`, `Transition`)
@@ -73,5 +70,3 @@
 - [ ] Observabilidade (OpenTelemetry + Serilog estruturado)
 - [ ] Rate limiting por tenant
 - [ ] Audit log por operação
-- [ ] Frontend do Form Builder
-- [ ] Endpoints públicos `/config/*`

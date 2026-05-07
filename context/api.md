@@ -4,9 +4,25 @@
 - Dev: `http://localhost:5000`
 - Produção Docker: `http://localhost:8080`
 
-## Estado Atual (sem autenticação — DevTenantId hardcoded)
-Enquanto auth não está implementado, todos os endpoints admin usam um tenant fixo:
-`DevTenantId = 00000000-0000-0000-0000-000000000001`
+## Auth Endpoints
+Autenticação JWT com Identity Core. Seed automático em Development: `admin@admincore.local / Admin123!`.
+
+```
+POST /auth/login     → { accessToken, refreshToken, expiresIn, user }
+    body: { email, password }
+    AllowAnonymous
+
+POST /auth/refresh   → { accessToken, refreshToken, expiresIn, user }
+    body: { refreshToken }
+    AllowAnonymous
+
+POST /auth/register  → { id, tenantId, email, name }
+    body: { email, password, firstName, lastName, tenantSlug }
+    Requer role Admin
+```
+
+Todos os endpoints admin (entities, parameters, roles, tenants, forms, white-label) exigem Bearer token
+com claims: `sub`, `user_id`, `tenant_id`, `email`, `name`, `roles`.
 
 ---
 
@@ -111,4 +127,3 @@ None=0, Create=1, Read=2, Update=4, Delete=8, All=15
 ## Pendente (não implementado)
 - `GET /config/entities` — API pública para apps de negócio consumirem
 - Endpoints de usuários (`/admin/users`)
-- JWT auth em todos os endpoints (DevTenantId será substituído)

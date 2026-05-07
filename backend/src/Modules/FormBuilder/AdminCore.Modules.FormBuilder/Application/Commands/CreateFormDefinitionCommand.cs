@@ -6,17 +6,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AdminCore.Modules.FormBuilder.Application.Commands;
 
-public record FormFieldInput(
-    string Label,
-    string Key,
-    FormFieldType Type,
-    bool IsRequired,
-    string? Placeholder,
-    int DisplayOrder,
-    string? OptionsJson,
-    string? ValidationJson,
-    string? LayoutJson
-);
+public class FormFieldInput
+{
+    public string Label { get; init; } = null!;
+    public string Key { get; init; } = null!;
+    public FormFieldType Type { get; init; }
+    public bool IsRequired { get; init; }
+    public string? Placeholder { get; init; }
+    public int DisplayOrder { get; init; }
+    public string? OptionsJson { get; init; }
+    public string? ValidationJson { get; init; }
+    public string? LayoutJson { get; init; }
+}
 
 public record CreateFormDefinitionCommand(
     Guid TenantId,

@@ -12,7 +12,14 @@ public class ParametersModule : IModule
     public IServiceCollection RegisterModule(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ParametersDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        {
+            var provider = configuration["Database:Provider"] ?? "postgres";
+            var conn = configuration.GetConnectionString("DefaultConnection");
+            if (provider == "sqlite")
+                options.UseSqlite(conn);
+            else
+                options.UseNpgsql(conn);
+        });
 
         services.AddMemoryCache();
         services.AddScoped<ICachedParameterService, CachedParameterService>();
